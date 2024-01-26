@@ -1,0 +1,33 @@
+{
+  "name": "lcc_blog",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "docs:dev": "vitepress dev",
+    "docs:build": "vitepress build",
+    "docs:preview": "vitepress preview"
+  },
+  "devDependencies": {
+    "less": "^4.2.0",
+    "vitepress": "1.0.0-rc.40"
+  },
+  "description": "前端笔记",
+  "directories": {
+    "doc": "docs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lixiaochen-code/lcc_blog.git"
+  },
+  "keywords": [
+    "front-end",
+    "notes"
+  ],
+  "author": "themusecatcher",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/lixiaochen-code/lcc_blog/issues"
+  },
+  "homepage": "https://github.com/lixiaochen-code/lcc_blog#readme"
+}
