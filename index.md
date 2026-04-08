@@ -4,22 +4,21 @@ layout: home
 
 hero:
   name: "小晨的学习笔记"
-  text: "记录学习笔记，记录问题"
-  # tagline: 记录学习笔记，记录问题
+  text: "低 token、可检索、可持续整理的个人知识库"
+  tagline: "Markdown 做底座，本地脚本做索引，AI 只处理命中的少量上下文。"
   actions:
     - theme: brand
-      text: 学习笔记
-      link: /vite学习笔记
+      text: 打开知识库
+      link: /notes/
     - theme: alt
-      text: 问题
-      link: /问题
+      text: 查看工作流
+      link: /notes/inbox/getting-started
 
 features:
-  - title: Feature A
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
-  - title: Feature B
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
-  - title: Feature C
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
+  - title: 本地检索优先
+    details: 先筛出最相关的少量笔记，再把紧凑上下文交给 AI，尽量避免全量喂给模型。
+  - title: 自动目录维护
+    details: 新增或更新笔记时，会自动重建目录页、站点导航和本地索引。
+  - title: 面向对话式更新
+    details: 可以逐步把对话收束成 add、append、update-meta、search 等稳定动作，便于接入 Codex 或 OpenCode。
 ---
-

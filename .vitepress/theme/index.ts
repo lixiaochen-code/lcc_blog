@@ -1,6 +1,6 @@
-import DefaultTheme from "vitepress/theme";
+import AiAppLayout from "./components/AiAppLayout.vue";
 import "./global.less"; // global less
 
 export default {
-  extends: DefaultTheme, // or ...DefaultTheme
+  Layout: AiAppLayout,
 };

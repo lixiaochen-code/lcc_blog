@@ -1,0 +1,4 @@
+.vitepress/dist
+.vitepress/cache
+data/ai-runtime.local.json
+data/ai-access.local.json

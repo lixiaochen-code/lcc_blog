@@ -4,9 +4,20 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "docs:dev": "vitepress dev",
-    "docs:build": "vitepress build",
-    "docs:preview": "vitepress preview"
+    "docs:dev": "node ./scripts/kb/build.mjs && vitepress dev",
+    "dev:ai": "node ./scripts/dev/start-dev.mjs",
+    "dev:ai-server": "node ./scripts/dev/ai-dev-server.mjs",
+    "docs:build": "node ./scripts/kb/build.mjs && vitepress build",
+    "docs:preview": "vitepress preview",
+    "kb:build": "node ./scripts/kb/build.mjs",
+    "kb:add": "node ./scripts/kb/add.mjs",
+    "kb:update": "node ./scripts/kb/update.mjs",
+    "kb:search": "node ./scripts/kb/search.mjs",
+    "kb:context": "node ./scripts/kb/context.mjs",
+    "kb:agent": "node ./scripts/kb/agent.mjs",
+    "kb:url": "node ./scripts/kb/url.mjs",
+    "kb:runtime-config": "node ./scripts/kb/runtime-config.mjs",
+    "kb:access": "node ./scripts/kb/access-control.mjs"
   },
   "devDependencies": {
     "less": "^4.2.0",
