@@ -19,7 +19,7 @@
 
 知识内容保存在：
 
-- [`notes/`](/Users/apple/Documents/ai/lcc_blog/notes)
+- [`notes/`](/Users/lichen/Documents/我的项目/lcc_blog/notes)
 
 原则：
 
@@ -31,7 +31,7 @@
 
 知识库的信息架构由：
 
-- [`data/docs.json`](/Users/apple/Documents/ai/lcc_blog/data/docs.json)
+- [`data/docs.json`](/Users/lichen/Documents/我的项目/lcc_blog/data/docs.json)
 
 驱动。
 
@@ -77,7 +77,7 @@
 
 核心入口：
 
-- [`scripts/kb/agent.mjs`](/Users/apple/Documents/ai/lcc_blog/scripts/kb/agent.mjs)
+- [`scripts/kb/agent.mjs`](/Users/lichen/Documents/我的项目/lcc_blog/scripts/kb/agent.mjs)
 
 补充说明：
 
@@ -91,16 +91,17 @@
 
 运行时配置模板：
 
-- [`data/ai-runtime.example.json`](/Users/apple/Documents/ai/lcc_blog/data/ai-runtime.example.json)
+- [`data/ai-runtime.example.json`](/Users/lichen/Documents/我的项目/lcc_blog/data/ai-runtime.example.json)
 
 服务器本地私有配置：
 
 - `data/ai-runtime.local.json`（已加入 `.gitignore`）
+- `data/ai-sessions.local.json`（本地 AI dev 会话持久化，已加入 `.gitignore`）
 
 配置入口：
 
 - `pnpm kb:runtime-config --action inspect`
-- `pnpm kb:runtime-config --action set --protocol https --baseUrl api.openai.com/v1 --model gpt-4.1-mini`
+- `pnpm kb:runtime-config --action set --protocol https --baseUrl api.siliconflow.cn/v1 --model deepseek-ai/DeepSeek-V3.2`
 
 用户授权入口：
 
@@ -112,7 +113,8 @@
 约束：
 
 - 最高权限角色为 `super_admin`
-- `super_admin` 可修改 `protocol`、`baseUrl`、`apiKey`、`model`
+- `super_admin` 可管理多个 API 平台
+- 每个平台可维护自己的 `protocol`、`baseUrl`、`apiKey` 和多个 `model`
 - 当前只允许选择一个生效模型，不开放普通用户自行切换
 - `apiKey` 应保存在服务器本地配置中，不应提交到仓库
 - 普通用户角色为 `admin`
@@ -120,6 +122,7 @@
 - 用户只能由 `super_admin` 添加
 - 登录时需要同时校验 `昵称 + userId`
 - 当前本地 AI 模块已接入最小可用登录态和会话 token
+- 本地 dev server 的登录 session 已改为文件持久化，避免服务重启后立即失效
 
 ### 5. 网页导入
 
@@ -133,8 +136,8 @@
 
 相关脚本：
 
-- [`scripts/kb/url.mjs`](/Users/apple/Documents/ai/lcc_blog/scripts/kb/url.mjs)
-- [`scripts/kb/extract_article.py`](/Users/apple/Documents/ai/lcc_blog/scripts/kb/extract_article.py)
+- [`scripts/kb/url.mjs`](/Users/lichen/Documents/我的项目/lcc_blog/scripts/kb/url.mjs)
+- [`scripts/kb/extract_article.py`](/Users/lichen/Documents/我的项目/lcc_blog/scripts/kb/extract_article.py)
 
 ## 当前命令
 
@@ -157,7 +160,7 @@
 - `pnpm kb:agent --action append --slug getting-started --append "补充内容" --build false`
 - `pnpm kb:agent --action ingest-url --url "https://example.com"`
 - `pnpm kb:runtime-config --action inspect`
-- `pnpm kb:runtime-config --action set --protocol https --baseUrl api.openai.com/v1 --model gpt-4.1-mini`
+- `pnpm kb:runtime-config --action set --protocol https --baseUrl api.siliconflow.cn/v1 --model deepseek-ai/DeepSeek-V3.2`
 - `pnpm kb:access --action inspect`
 - `pnpm kb:access --action add-user --name Alice --role admin`
 - `pnpm kb:access --action set-role --id alice --role admin`
@@ -233,6 +236,7 @@
 - AI 控制台内部应采用纵向 `tab` 切换
 - `AI 对话` 是主入口
 - `我的` 用于查看当前登录身份、权限表和执行日志
+- `API 管理` 只对 `super_admin` 开放，用于管理平台、模型与当前生效模型
 - `用户管理` 只对 `super_admin` 开放
 - 聊天区按“先自然语言理解，再做服务端权限校验，再执行脚本”工作
 - AI 面板支持拖拽调宽，桌面端最大宽度为视口 `50%`
@@ -261,13 +265,16 @@
 - 右侧 AI 工作区内部使用纵向 icon `tab`
 - `AI 对话` 为默认主入口
 - `我的` 显示当前账号信息、完整权限表和执行日志
+- `API 管理` 允许 `super_admin` 维护多个 API 平台和多个模型，并单独选择一个当前生效模型
 - `用户管理` 显示用户列表、详情展开、权限编辑、角色切换和删除用户
 - 对话区采用“header 固定、输入框固定、消息区独立滚动”的布局
 
 ### 4. 权限要求
 
 - `super_admin` 拥有最高权限
-- `super_admin` 可修改 `baseUrl`、`protocol`、`apiKey`、`model`
+- `super_admin` 可新增、编辑、删除 API 平台
+- `super_admin` 可修改 `baseUrl`、`protocol`、`apiKey`
+- `super_admin` 可为每个平台维护多个模型，并在所有模型中选择一个当前生效模型
 - 系统同一时间只允许一个生效模型
 - `admin` 用户必须先由 `super_admin` 添加
 - `admin` 默认只拥有基础权限，具体知识库权限由 `super_admin` 分配
@@ -290,6 +297,7 @@
 - 实际链路为：`自然语言 -> 模型规划动作 -> 服务端权限校验 -> kb:agent / kb:url`
 - 当前仍然是受控动作式 AI，不允许模型直接自由改仓库
 - 服务端对动作做最终权限判定，模型不直接决定“有没有权限”
+- 对于 `retrieve` 这类查询动作，服务端已增加兜底逻辑：若规划结果缺少 `query`，会自动回退为用户原始提问
 
 ## 当前阶段判断
 
@@ -328,7 +336,9 @@
 - 管理用户授权
 - 管理权限位
 - 管理 token 配额
-- 管理 `baseUrl`、`protocol`、`apiKey`、`model`
+- 管理多个 API 平台
+- 管理每个平台的 `baseUrl`、`protocol`、`apiKey`
+- 管理每个平台下的模型列表，并指定唯一生效模型
 - 保证系统始终只有一个生效模型
 - 继续补全用户详情、删除、状态切换和可见性细节
 
@@ -363,22 +373,27 @@
 - `AI 对话` 已改成自然语言入口
 - 当前链路为：模型先规划动作，服务端再校验权限，最后执行脚本
 - `我的` 已展示当前账号信息、完整权限表、执行日志
+- `API 管理` 已接入 `super_admin` 工作区
+- 运行时配置已升级为“多个平台 + 每个平台多个模型 + 单个当前生效模型”
 - `用户管理` 仅对 `super_admin` 显示
 - `新增用户` 已改为只填昵称、服务端自动生成随机 `userId`
 - `用户管理` 已支持用户列表、详情展开、权限授予/回收、角色切换、删除用户、停用/启用
 - AI 面板已支持拖拽调宽，桌面端最大宽度为视口 `50%`
 - 聊天页已调整为：header 固定、输入区固定、消息区独立滚动、自动滚到底
+- 本地 AI dev server 已支持会话持久化，避免重启后登录 token 立即失效
+- AI 对话的 `retrieve` 动作已补充 query 兜底，避免自然语言查询因 planner 漏参而执行失败
 
 ## 新对话续接建议
 
 如果换一个新对话，希望直接延续当前需求，优先告诉模型下面几点：
 
 - 这是一个 `VitePress + Markdown + 受控 AI 动作` 的知识库博客系统
-- 当前 AI 模块已经有 `登录 / 对话 / 我的 / 用户管理`
+- 当前 AI 模块已经有 `登录 / 对话 / 我的 / API 管理 / 用户管理`
 - 角色只有两种：`super_admin` 和 `admin`
 - 用户只能由 `super_admin` 添加
 - 登录必须校验 `昵称 + userId`
 - AI 对话必须遵循：`自然语言 -> 模型规划动作 -> 服务端权限校验 -> 脚本执行`
+- 运行时配置已经支持多个平台和多个模型，但同一时刻只允许一个当前生效模型
 - 不允许让模型直接自由修改整个仓库
 - 当前最优先是继续打磨右侧 AI 工作区的 UI、滚动、布局和用户管理体验
 
