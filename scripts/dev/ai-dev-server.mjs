@@ -295,6 +295,24 @@ function buildArgsFromRecord(record = {}) {
   });
 }
 
+function normalizePlannedArgs(action, args, message) {
+  const nextArgs = typeof args === "object" && args ? { ...args } : {};
+  const fallbackMessage = String(message || "").trim();
+
+  if (action === "retrieve" && !String(nextArgs.query || "").trim()) {
+    nextArgs.query = fallbackMessage;
+  }
+
+  if ((action === "inspect-url" || action === "ingest-url") && !String(nextArgs.url || "").trim()) {
+    const matchedUrl = fallbackMessage.match(/https?:\/\/\S+/i);
+    if (matchedUrl) {
+      nextArgs.url = matchedUrl[0];
+    }
+  }
+
+  return nextArgs;
+}
+
 function normalizeHistory(history) {
   if (!Array.isArray(history)) {
     return [];
@@ -409,7 +427,7 @@ async function planChatAction({ actor, message, history }) {
     plan: {
       intent: String(plan.intent || "").trim(),
       action: String(plan.action || "none").trim(),
-      args: typeof plan.args === "object" && plan.args ? plan.args : {},
+      args: normalizePlannedArgs(String(plan.action || "none").trim(), plan.args, message),
       title: String(plan.title || "AI 计划").trim() || "AI 计划",
       reply: String(plan.reply || "").trim(),
     },

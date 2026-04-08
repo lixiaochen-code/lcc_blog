@@ -5,10 +5,11 @@ description: "由 docs.json 驱动的个人知识库目录"
 
 # 知识库目录
 
-当前共收录 **12** 篇文档，其中知识库文档 **10** 篇。目录结构由 `data/docs.json` 决定。
+当前共收录 **13** 篇文档，其中知识库文档 **11** 篇。目录结构由 `data/docs.json` 决定。
 
 ## 最近更新
 
+- [Awesome APIs 中文资源总结](/notes/tools/awesome-apis-中文资源总结) · 2026-04-08 · Awesome APIs 中文资源总结
 - [知识库开始使用](/notes/inbox/getting-started) · 2026-04-08 · 通过开发工作台更新的摘要。
 - [dev-flow-owner-note](/notes/inbox/dev-flow-owner-note) · 2026-04-08 · dev-flow-owner-note
 - [CLIProxyAPI 项目整理](/notes/tools/CLIProxyAPI 项目整理) · 2026-04-08 · CLIProxyAPI 是一个把多种 AI CLI 能力包装成兼容 OpenAI、Gemini、Claude、Codex 接口的代理服务，适合把 OAuth 登录得到的 CLI 能力统一暴露成 API。
@@ -18,7 +19,6 @@ description: "由 docs.json 驱动的个人知识库目录"
 - [对话式知识库接入设想](/notes/architecture/对话式知识库接入设想) · 2026-04-08 · 记录如何把用户对话收束成稳定的知识库动作，以便在 Codex 或 OpenCode 中完成新增、追加与检索。
 - [生产 AI 权限与发布控制设计](/notes/architecture/生产AI权限与发布控制设计) · 2026-04-08 · 规划生产站点中的 AI 工具如何受控地修改开发环境知识库，并由 owner 决定是否重建和发布生产。
 - [服务器直部署与运行时配置](/notes/architecture/服务器直部署与运行时配置) · 2026-04-08 · 定义生产 AI 工具如何直接在服务器运行，以及 owner 如何管理 baseUrl、protocol、apiKey 和单一模型。
-- [Owner 授权与用户访问控制](/notes/architecture/owner授权与用户访问控制) · 2026-04-08 · 定义 owner 如何授权普通用户使用生产 AI，并控制其知识库权限、运行时权限和 token 配额。
 
 ## 开始使用
 
@@ -59,3 +59,9 @@ description: "由 docs.json 驱动的个人知识库目录"
 从外部网页、公众号或文章链接导入的内容。
 
 - [杀疯了！前端最强 10 个 AI Skills ！效率提升500%！](/notes/web-clips/杀疯了-前端最强-10-个-ai-skills-效率提升500) · 标签：微信、AI、前端
+
+## 待整理
+
+AI 尚未完成归档或还未明确位置的文档。
+
+- [Awesome APIs 中文资源总结](/notes/tools/awesome-apis-中文资源总结) · 标签：api、开发资源、github、awesome-list

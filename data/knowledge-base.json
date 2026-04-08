@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-04-08T16:26:35.095Z",
-  "totalNotes": 12,
+  "generatedAt": "2026-04-08T16:42:39.642Z",
+  "totalNotes": 13,
   "notes": [
     {
       "id": "notes/architecture/对话式知识库接入设想",
@@ -369,6 +369,26 @@
           "url": "/notes/architecture/对话式知识库接入设想"
         }
       ]
+    },
+    {
+      "id": "notes/tools/awesome-apis-中文资源总结",
+      "title": "Awesome APIs 中文资源总结",
+      "summary": "Awesome APIs 中文资源总结",
+      "tags": [
+        "api",
+        "开发资源",
+        "github",
+        "awesome-list"
+      ],
+      "aliases": [],
+      "headings": [],
+      "url": "/notes/tools/awesome-apis-中文资源总结",
+      "relativePath": "notes/tools/awesome-apis-中文资源总结.md",
+      "category": "tools",
+      "createdAt": "2026-04-08T16:41:44.792Z",
+      "updatedAt": "2026-04-08T16:41:44.792Z",
+      "contentPreview": "Awesome APIs 中文资源总结\n这是一个名为“Awesome APIs”的GitHub仓库的中文README文件，旨在为开发者收集和整理各类优秀的API资源。\n**核心目的**：\n收集和分类“非常好的API”，方便开发者查找和集成。\n鼓励社区参与（Star、Fork、提交PR）。\n**内容结构**：\n庞大的分类目录，涵盖数十个领域，每个类别下列举相关API及其简要说明。\n**主要涵盖领域**：\n**开发与平台**：GitHub、GitLab、云服务（阿里云、腾讯云等）、开发工具（CircleCI、TravisCI）。\n**社交媒体与通信**：Fa",
+      "related": []
     },
     {
       "id": "notes/tools/CLIProxyAPI 项目整理",
