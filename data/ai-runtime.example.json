@@ -1,25 +1,30 @@
 {
   "meta": {
-    "version": 1,
+    "version": 2,
     "ownerManaged": true,
     "singleModelOnly": true,
     "dockerRequired": false,
     "description": "Runtime settings for the production AI tool. Intended to run directly on a server process without Docker."
   },
-  "server": {
-    "mode": "direct",
-    "protocol": "https",
-    "baseUrl": "api.openai.com/v1"
-  },
   "auth": {
     "provider": "owner-managed",
     "inviteOnly": true
   },
-  "model": {
-    "selected": "gpt-4.1-mini"
-  },
-  "credentials": {
-    "apiKey": ""
+  "platforms": [
+    {
+      "id": "siliconflow",
+      "name": "SiliconFlow",
+      "protocol": "https",
+      "baseUrl": "api.siliconflow.cn/v1",
+      "apiKey": "sk-fmaikibtizeoeamejcwulgzezwvqgawcoeivwrkzuornoshj",
+      "models": [
+        "deepseek-ai/DeepSeek-V3.2"
+      ]
+    }
+  ],
+  "selection": {
+    "platformId": "siliconflow",
+    "model": "deepseek-ai/DeepSeek-V3.2"
   },
   "permissions": {
     "ownerCanManageConnection": true,

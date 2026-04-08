@@ -2,7 +2,7 @@ import http from "node:http";
 import { spawnSync } from "node:child_process";
 import path from "node:path";
 import crypto from "node:crypto";
-import { readJson } from "../kb/shared.mjs";
+import { ensureDir, readJson, writeJson } from "../kb/shared.mjs";
 
 const PORT = Number(process.env.AI_DEV_PORT || 3030);
 const projectRoot = process.cwd();
@@ -10,6 +10,7 @@ const runtimeLocalPath = path.join(projectRoot, "data", "ai-runtime.local.json")
 const runtimeTemplatePath = path.join(projectRoot, "data", "ai-runtime.example.json");
 const accessLocalPath = path.join(projectRoot, "data", "ai-access.local.json");
 const accessTemplatePath = path.join(projectRoot, "data", "ai-access.example.json");
+const sessionsLocalPath = path.join(projectRoot, "data", "ai-sessions.local.json");
 
 const actionPermissions = {
   retrieve: "notes.read",
@@ -22,7 +23,7 @@ const actionPermissions = {
 };
 
 const supportedKbActions = Object.keys(actionPermissions);
-const authSessions = new Map();
+const authSessions = new Map(Object.entries(readJson(sessionsLocalPath, { sessions: {} })?.sessions || {}));
 
 function sendJson(response, status, payload) {
   response.writeHead(status, {
@@ -84,6 +85,87 @@ function loadRuntimeConfig() {
   return readJson(runtimeLocalPath, readJson(runtimeTemplatePath, {})) || {};
 }
 
+function normalizeProtocol(value) {
+  const normalized = String(value || "https").trim().toLowerCase();
+  return normalized === "http" ? "http" : "https";
+}
+
+function normalizeBaseUrl(value) {
+  return String(value || "")
+    .trim()
+    .replace(/\/+$/, "")
+    .replace(/^https?:\/\//i, "");
+}
+
+function normalizeModel(value) {
+  return String(value || "").trim();
+}
+
+function normalizeRuntimeConfig(config = {}) {
+  const rawPlatforms = Array.isArray(config.platforms) && config.platforms.length > 0
+    ? config.platforms
+    : [
+        {
+          id: "default",
+          name: "Default",
+          protocol: config?.server?.protocol || "https",
+          baseUrl: config?.server?.baseUrl || "",
+          apiKey: config?.credentials?.apiKey || "",
+          models: [config?.model?.selected || ""].filter(Boolean),
+        },
+      ];
+
+  const platforms = rawPlatforms
+    .map((platform, index) => ({
+      id: String(platform?.id || platform?.name || `platform-${index + 1}`).trim(),
+      name: String(platform?.name || `Platform ${index + 1}`).trim(),
+      protocol: normalizeProtocol(platform?.protocol || "https"),
+      baseUrl: normalizeBaseUrl(platform?.baseUrl || ""),
+      apiKey: String(platform?.apiKey || "").trim(),
+      models: Array.from(
+        new Set(
+          (Array.isArray(platform?.models) ? platform.models : [])
+            .map((item) => normalizeModel(item))
+            .filter(Boolean)
+        )
+      ),
+    }))
+    .filter((platform) => platform.baseUrl && platform.models.length > 0);
+
+  const activePlatform =
+    platforms.find((item) => item.id === String(config?.selection?.platformId || "").trim()) || platforms[0] || null;
+  const selectedModel = activePlatform?.models.includes(String(config?.selection?.model || "").trim())
+    ? String(config.selection.model).trim()
+    : activePlatform?.models[0] || "";
+
+  return {
+    ...config,
+    platforms,
+    selection: {
+      platformId: activePlatform?.id || "",
+      model: selectedModel,
+    },
+    server: {
+      mode: "direct",
+      protocol: activePlatform?.protocol || "https",
+      baseUrl: activePlatform?.baseUrl || "",
+    },
+    model: {
+      selected: selectedModel,
+    },
+    credentials: {
+      apiKey: activePlatform?.apiKey || "",
+    },
+  };
+}
+
+function persistSessions() {
+  ensureDir(path.dirname(sessionsLocalPath));
+  writeJson(sessionsLocalPath, {
+    sessions: Object.fromEntries(authSessions.entries()),
+  });
+}
+
 function normalizeAccessRole(role) {
   const normalized = String(role || "").trim().toLowerCase();
   if (normalized === "owner") {
@@ -113,6 +195,7 @@ function loadAccessConfig() {
 }
 
 function sanitizeRuntimeConfig(config) {
+  const normalized = normalizeRuntimeConfig(config);
   const apiKey = String(config?.credentials?.apiKey || "");
   const maskedKey = apiKey
     ? apiKey.length <= 8
@@ -121,9 +204,17 @@ function sanitizeRuntimeConfig(config) {
     : "";
 
   return {
-    ...config,
+    ...normalized,
+    platforms: (normalized.platforms || []).map((platform) => ({
+      ...platform,
+      apiKey: platform.apiKey
+        ? platform.apiKey.length <= 8
+          ? `${platform.apiKey.slice(0, 2)}***${platform.apiKey.slice(-1)}`
+          : `${platform.apiKey.slice(0, 4)}***${platform.apiKey.slice(-4)}`
+        : "",
+    })),
     credentials: {
-      ...(config.credentials || {}),
+      ...(normalized.credentials || {}),
       apiKey: maskedKey,
     },
   };
@@ -241,7 +332,7 @@ function extractJsonFromText(text) {
 }
 
 async function callChatModel(messages) {
-  const runtime = loadRuntimeConfig();
+  const runtime = normalizeRuntimeConfig(loadRuntimeConfig());
   const protocol = String(runtime?.server?.protocol || "https").trim() || "https";
   const baseUrl = String(runtime?.server?.baseUrl || "").trim().replace(/\/+$/, "");
   const model = String(runtime?.model?.selected || "").trim();
@@ -388,12 +479,21 @@ async function handleRequest(request, response) {
       const result = runNodeScript("scripts/kb/runtime-config.mjs", [
         "--action",
         "set",
-        ...buildArgsFromRecord({
-          protocol: body.protocol,
-          baseUrl: body.baseUrl,
-          model: body.model,
-          apiKey: body.apiKey,
-        }),
+        ...buildArgsFromRecord(
+          body.platforms
+            ? {
+                configJson: JSON.stringify({
+                  platforms: body.platforms,
+                  selection: body.selection,
+                }),
+              }
+            : {
+                protocol: body.protocol,
+                baseUrl: body.baseUrl,
+                model: body.model,
+                apiKey: body.apiKey,
+              }
+        ),
       ]);
 
       sendJson(response, result.ok ? 200 : 400, {
@@ -418,6 +518,7 @@ async function handleRequest(request, response) {
       }
       const token = crypto.randomBytes(24).toString("hex");
       authSessions.set(token, user.id);
+      persistSessions();
 
       sendJson(response, 200, {
         ok: true,
@@ -440,6 +541,7 @@ async function handleRequest(request, response) {
       const token = getBearerToken(request);
       if (token) {
         authSessions.delete(token);
+        persistSessions();
       }
       sendJson(response, 200, { ok: true });
       return;

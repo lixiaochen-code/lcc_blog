@@ -2,3 +2,5 @@
 .vitepress/cache
 data/ai-runtime.local.json
 data/ai-access.local.json
+data/ai-sessions.local.json
+node_modules

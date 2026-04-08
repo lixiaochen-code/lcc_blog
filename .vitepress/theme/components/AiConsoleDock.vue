@@ -3,8 +3,20 @@ import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } 
 import { aiConsoleOpen, aiConsoleTab, closeAiConsole } from "./aiConsoleState";
 
 type RuntimeConfig = {
+  platforms?: RuntimePlatform[];
+  selection?: { platformId?: string; model?: string };
   server?: { protocol?: string; baseUrl?: string };
   model?: { selected?: string };
+  credentials?: { apiKey?: string };
+};
+
+type RuntimePlatform = {
+  id: string;
+  name: string;
+  protocol: string;
+  baseUrl: string;
+  apiKey?: string;
+  models: string[];
 };
 
 type AccessUser = {
@@ -69,9 +81,24 @@ const addUserForm = reactive({
   role: "admin",
 });
 
+const runtimePlatforms = ref<RuntimePlatform[]>([]);
+const runtimeSelection = reactive({
+  platformId: "",
+  model: "",
+});
+const runtimePlatformForm = reactive({
+  id: "",
+  name: "",
+  protocol: "https",
+  baseUrl: "api.siliconflow.cn/v1",
+  apiKey: "",
+  modelsText: "deepseek-ai/DeepSeek-V3.2",
+});
+
 const tabs = [
   { key: "chat", label: "AI 对话" },
   { key: "me", label: "我的" },
+  { key: "api", label: "API 管理" },
   { key: "users", label: "用户管理" },
 ] as const;
 
@@ -81,9 +108,11 @@ const runtimeSummary = computed(() => {
   if (!isSuperAdmin.value) {
     return "登录后可使用聊天；super_admin 可查看 AI 运行时配置。";
   }
-  const protocol = runtime.value.server?.protocol || "https";
-  const baseUrl = runtime.value.server?.baseUrl || "未配置";
-  const model = runtime.value.model?.selected || "未配置";
+  const platform =
+    runtimePlatforms.value.find((item) => item.id === runtimeSelection.platformId) || runtimePlatforms.value[0];
+  const protocol = platform?.protocol || "https";
+  const baseUrl = platform?.baseUrl || "未配置";
+  const model = runtimeSelection.model || "未配置";
   return `${protocol}://${baseUrl} · ${model}`;
 });
 const permissionRows = computed(() =>
@@ -95,7 +124,7 @@ const permissionRows = computed(() =>
 
 const visibleTabs = computed(() =>
   tabs.filter((tab) => {
-    if (tab.key === "users") {
+    if (tab.key === "users" || tab.key === "api") {
       return isSuperAdmin.value;
     }
     return true;
@@ -110,6 +139,10 @@ const selectedManagedPermissionRows = computed(() =>
     allowed: Boolean(selectedManagedUser.value?.permissions?.includes(permission)),
   }))
 );
+const selectedRuntimePlatform = computed(
+  () => runtimePlatforms.value.find((item) => item.id === runtimeSelection.platformId) || null
+);
+const selectedRuntimeModels = computed(() => selectedRuntimePlatform.value?.models || []);
 
 function applyDockWidth() {
   if (typeof document === "undefined") {
@@ -192,6 +225,59 @@ function saveToken(token: string) {
   }
 }
 
+function splitModelsText(value: string) {
+  return Array.from(
+    new Set(
+      String(value || "")
+        .split(/[\n,]/)
+        .map((item) => item.trim())
+        .filter(Boolean)
+    )
+  );
+}
+
+function createPlatformId(value: string) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9-]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+function fillRuntimePlatformForm(platform: RuntimePlatform | null) {
+  runtimePlatformForm.id = platform?.id || "";
+  runtimePlatformForm.name = platform?.name || "";
+  runtimePlatformForm.protocol = platform?.protocol || "https";
+  runtimePlatformForm.baseUrl = platform?.baseUrl || "api.siliconflow.cn/v1";
+  runtimePlatformForm.apiKey = "";
+  runtimePlatformForm.modelsText = (platform?.models || ["deepseek-ai/DeepSeek-V3.2"]).join("\n");
+}
+
+function syncRuntimeForm() {
+  runtimePlatforms.value = (runtime.value.platforms || []).map((platform) => ({
+    id: platform.id,
+    name: platform.name,
+    protocol: platform.protocol,
+    baseUrl: platform.baseUrl,
+    apiKey: platform.apiKey || "",
+    models: [...(platform.models || [])],
+  }));
+
+  runtimeSelection.platformId =
+    runtime.value.selection?.platformId || runtimePlatforms.value[0]?.id || "";
+
+  const currentPlatform =
+    runtimePlatforms.value.find((item) => item.id === runtimeSelection.platformId) || runtimePlatforms.value[0] || null;
+
+  runtimeSelection.model =
+    (currentPlatform?.models || []).includes(String(runtime.value.selection?.model || ""))
+      ? String(runtime.value.selection?.model || "")
+      : currentPlatform?.models[0] || "";
+
+  fillRuntimePlatformForm(currentPlatform);
+}
+
 async function request(path: string, options: RequestInit = {}, requireAuth = true) {
   const headers = new Headers(options.headers || {});
   headers.set("Content-Type", "application/json");
@@ -205,7 +291,13 @@ async function request(path: string, options: RequestInit = {}, requireAuth = tr
   });
   const data = await response.json();
   if (!response.ok || data.ok === false) {
-    throw new Error(data.error || data.stderr || "Request failed.");
+    const message = data.error || data.stderr || "Request failed.";
+    if (message === "Session expired or invalid.") {
+      saveToken("");
+      currentUser.value = null;
+      statusText.value = "登录已失效，请重新登录";
+    }
+    throw new Error(message);
   }
   return data;
 }
@@ -242,6 +334,7 @@ async function loadState() {
     if (currentUser.value?.role === "super_admin") {
       const runtimeResult = await request("/runtime-config");
       runtime.value = runtimeResult.config || {};
+      syncRuntimeForm();
     } else {
       runtime.value = {};
     }
@@ -466,6 +559,115 @@ async function sendChat() {
   }
 }
 
+function editRuntimePlatform(platform: RuntimePlatform) {
+  fillRuntimePlatformForm(platform);
+}
+
+function resetRuntimePlatformForm() {
+  fillRuntimePlatformForm(selectedRuntimePlatform.value);
+}
+
+function upsertRuntimePlatform() {
+  const name = runtimePlatformForm.name.trim();
+  const baseUrl = runtimePlatformForm.baseUrl.trim().replace(/^https?:\/\//i, "").replace(/\/+$/, "");
+  const models = splitModelsText(runtimePlatformForm.modelsText);
+  if (!name || !baseUrl || models.length === 0) {
+    pushLog("平台名称、Base URL 和至少一个模型为必填项");
+    return;
+  }
+
+  const protocol = runtimePlatformForm.protocol === "http" ? "http" : "https";
+  const existingIndex = runtimePlatforms.value.findIndex((item) => item.id === runtimePlatformForm.id);
+  const fallbackId = createPlatformId(name) || `platform-${runtimePlatforms.value.length + 1}`;
+  let id = runtimePlatformForm.id || fallbackId;
+
+  if (!runtimePlatformForm.id && runtimePlatforms.value.some((item) => item.id === id)) {
+    id = `${id}-${runtimePlatforms.value.length + 1}`;
+  }
+
+  const previous = existingIndex >= 0 ? runtimePlatforms.value[existingIndex] : null;
+  const nextPlatform: RuntimePlatform = {
+    id,
+    name,
+    protocol,
+    baseUrl,
+    apiKey: runtimePlatformForm.apiKey.trim() || previous?.apiKey || "",
+    models,
+  };
+
+  if (existingIndex >= 0) {
+    runtimePlatforms.value.splice(existingIndex, 1, nextPlatform);
+    pushLog(`已更新平台：${name}`);
+  } else {
+    runtimePlatforms.value = [...runtimePlatforms.value, nextPlatform];
+    pushLog(`已新增平台：${name}`);
+  }
+
+  if (!runtimeSelection.platformId || runtimeSelection.platformId === previous?.id) {
+    runtimeSelection.platformId = nextPlatform.id;
+  }
+  if (runtimeSelection.platformId === nextPlatform.id && !nextPlatform.models.includes(runtimeSelection.model)) {
+    runtimeSelection.model = nextPlatform.models[0] || "";
+  }
+
+  fillRuntimePlatformForm(nextPlatform);
+}
+
+function removeRuntimePlatform(id: string) {
+  if (runtimePlatforms.value.length <= 1) {
+    pushLog("至少保留一个 API 平台");
+    return;
+  }
+
+  runtimePlatforms.value = runtimePlatforms.value.filter((item) => item.id !== id);
+  if (runtimeSelection.platformId === id) {
+    runtimeSelection.platformId = runtimePlatforms.value[0]?.id || "";
+    runtimeSelection.model = runtimePlatforms.value[0]?.models[0] || "";
+  }
+  fillRuntimePlatformForm(selectedRuntimePlatform.value);
+  pushLog(`已移除平台：${id}`);
+}
+
+async function saveRuntimeConfig() {
+  if (!isSuperAdmin.value) {
+    return;
+  }
+
+  if (runtimePlatforms.value.length === 0) {
+    pushLog("请先至少配置一个 API 平台");
+    return;
+  }
+
+  const activePlatform =
+    runtimePlatforms.value.find((item) => item.id === runtimeSelection.platformId) || runtimePlatforms.value[0];
+  const activeModel = activePlatform.models.includes(runtimeSelection.model)
+    ? runtimeSelection.model
+    : activePlatform.models[0] || "";
+
+  busy.value = true;
+  try {
+    await request("/runtime-config", {
+      method: "POST",
+      body: JSON.stringify({
+        platforms: runtimePlatforms.value.map((platform) => ({
+          ...platform,
+          apiKey: platform.apiKey || undefined,
+        })),
+        selection: {
+          platformId: activePlatform.id,
+          model: activeModel,
+        },
+      }),
+    });
+    pushLog(`已更新 API 运行时：${activePlatform.name} · ${activeModel}`);
+    await loadState();
+  } catch (error: any) {
+    pushLog(`API 配置更新失败：${error.message}`);
+  } finally {
+    busy.value = false;
+  }
+}
+
 onMounted(async () => {
   applyDockWidth();
   await loadHealth();
@@ -494,6 +696,20 @@ watch(
     }
     await nextTick();
     scrollChatToBottom();
+  }
+);
+
+watch(
+  () => runtimeSelection.platformId,
+  (platformId) => {
+    const platform = runtimePlatforms.value.find((item) => item.id === platformId) || null;
+    if (!platform) {
+      runtimeSelection.model = "";
+      return;
+    }
+    if (!platform.models.includes(runtimeSelection.model)) {
+      runtimeSelection.model = platform.models[0] || "";
+    }
   }
 );
 </script>
@@ -567,6 +783,11 @@ watch(
             <span v-else-if="tab.key === 'me'" class="tab-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24">
                 <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4zm0 2c-4.4 0-8 2-8 4.5V20h16v-1.5C20 16 16.4 14 12 14z" />
+              </svg>
+            </span>
+            <span v-else-if="tab.key === 'api'" class="tab-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="M4 7.5A2.5 2.5 0 0 1 6.5 5h11A2.5 2.5 0 0 1 20 7.5v9a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 16.5zm3 1.5v6h10V9zm1 1h2v4H8zm3 0h2v4h-2z" />
               </svg>
             </span>
             <span v-else class="tab-icon" aria-hidden="true">
@@ -676,6 +897,113 @@ watch(
                 </header>
                 <div class="log-list">
                   <pre v-for="entry in logs" :key="entry">{{ entry }}</pre>
+                </div>
+              </article>
+            </div>
+          </template>
+
+          <template v-else-if="aiConsoleTab === 'api'">
+            <div class="console-stack">
+              <article class="panel">
+                <header class="panel-head">
+                  <h3>API 管理</h3>
+                  <p>可维护多个 API 平台与多个模型，但 AI 对话同一时刻只使用一个当前生效模型。</p>
+                </header>
+                <div class="form-grid">
+                  <label>
+                    <span>平台名称</span>
+                    <input v-model="runtimePlatformForm.name" placeholder="例如：SiliconFlow" />
+                  </label>
+                  <label>
+                    <span>Protocol</span>
+                    <select v-model="runtimePlatformForm.protocol">
+                      <option value="https">https</option>
+                      <option value="http">http</option>
+                    </select>
+                  </label>
+                  <label>
+                    <span>Base URL</span>
+                    <input v-model="runtimePlatformForm.baseUrl" placeholder="api.siliconflow.cn/v1" />
+                  </label>
+                  <label class="wide">
+                    <span>模型列表</span>
+                    <textarea
+                      v-model="runtimePlatformForm.modelsText"
+                      rows="4"
+                      placeholder="每行一个模型，或用逗号分隔"
+                    />
+                  </label>
+                  <label class="wide">
+                    <span>API Key</span>
+                    <input
+                      v-model="runtimePlatformForm.apiKey"
+                      type="password"
+                      :placeholder="'留空则保留当前 key'"
+                    />
+                  </label>
+                </div>
+                <div class="inline-actions">
+                  <button class="primary-button" :disabled="busy" @click="upsertRuntimePlatform">保存平台</button>
+                  <button class="ghost-button" :disabled="busy" @click="resetRuntimePlatformForm">重置表单</button>
+                </div>
+              </article>
+
+              <article class="panel">
+                <header class="panel-head">
+                  <h3>当前生效模型</h3>
+                  <p>{{ runtimeSummary }}</p>
+                </header>
+                <div class="form-grid">
+                  <label>
+                    <span>当前平台</span>
+                    <select v-model="runtimeSelection.platformId">
+                      <option v-for="platform in runtimePlatforms" :key="platform.id" :value="platform.id">
+                        {{ platform.name }}
+                      </option>
+                    </select>
+                  </label>
+                  <label>
+                    <span>当前模型</span>
+                    <select v-model="runtimeSelection.model">
+                      <option v-for="model in selectedRuntimeModels" :key="model" :value="model">
+                        {{ model }}
+                      </option>
+                    </select>
+                  </label>
+                </div>
+                <div class="inline-actions">
+                  <button class="primary-button" :disabled="busy" @click="saveRuntimeConfig">保存生效配置</button>
+                </div>
+              </article>
+
+              <article class="panel">
+                <header class="panel-head">
+                  <h3>平台列表</h3>
+                  <p>可维护多个平台，每个平台下可以配置多个模型。</p>
+                </header>
+                <div class="user-list">
+                  <div v-for="platform in runtimePlatforms" :key="platform.id" class="user-card">
+                    <div class="user-card-head">
+                      <strong>{{ platform.name }}</strong>
+                      <span>{{ platform.id }}</span>
+                    </div>
+                    <div class="user-card-head">
+                      <strong>连接</strong>
+                      <span>{{ platform.protocol }}://{{ platform.baseUrl }}</span>
+                    </div>
+                    <div class="user-card-head">
+                      <strong>模型</strong>
+                      <span>{{ platform.models.join(" / ") }}</span>
+                    </div>
+                    <div class="user-card-head">
+                      <strong>API Key</strong>
+                      <span>{{ platform.apiKey || "未配置" }}</span>
+                    </div>
+                    <div class="inline-actions">
+                      <button class="ghost-button" :disabled="busy" @click="editRuntimePlatform(platform)">编辑</button>
+                      <button class="ghost-button danger" :disabled="busy" @click="removeRuntimePlatform(platform.id)">删除</button>
+                    </div>
+                  </div>
                 </div>
               </article>
             </div>

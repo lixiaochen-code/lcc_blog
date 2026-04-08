@@ -10,29 +10,36 @@ function printAndExit(payload, code = 0) {
   process.exit(code);
 }
 
+function defaultPlatform() {
+  return {
+    id: "siliconflow",
+    name: "SiliconFlow",
+    protocol: "https",
+    baseUrl: "api.siliconflow.cn/v1",
+    apiKey: "sk-fmaikibtizeoeamejcwulgzezwvqgawcoeivwrkzuornoshj",
+    models: ["deepseek-ai/DeepSeek-V3.2"],
+  };
+}
+
 function defaultConfig() {
+  const platform = defaultPlatform();
+
   return {
     meta: {
-      version: 1,
+      version: 2,
       ownerManaged: true,
       singleModelOnly: true,
       dockerRequired: false,
       description: "Runtime settings for the production AI tool. Intended to run directly on a server process without Docker.",
     },
-    server: {
-      mode: "direct",
-      protocol: "https",
-      baseUrl: "api.openai.com/v1",
-    },
     auth: {
       provider: "owner-managed",
       inviteOnly: true,
     },
-    model: {
-      selected: "gpt-4.1-mini",
-    },
-    credentials: {
-      apiKey: "",
+    platforms: [platform],
+    selection: {
+      platformId: platform.id,
+      model: platform.models[0],
     },
     permissions: {
       ownerCanManageConnection: true,
@@ -40,10 +47,6 @@ function defaultConfig() {
       modelSelectableByOthers: false,
     },
   };
-}
-
-function loadConfig() {
-  return readJson(localPath, readJson(templatePath, defaultConfig())) || defaultConfig();
 }
 
 function maskKey(value) {
@@ -80,29 +83,199 @@ function normalizeModel(value) {
   return normalized;
 }
 
+function normalizePlatformId(value, fallback = "platform") {
+  return String(value || fallback)
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9-]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "") || fallback;
+}
+
+function splitModels(value) {
+  if (Array.isArray(value)) {
+    return value.map(normalizeModel);
+  }
+
+  return String(value || "")
+    .split(/[\n,]/)
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .map(normalizeModel);
+}
+
+function normalizePlatform(platform = {}, index = 0, previousPlatform = null) {
+  const fallbackId = normalizePlatformId(platform.name || platform.baseUrl || `platform-${index + 1}`, `platform-${index + 1}`);
+  const id = normalizePlatformId(platform.id, fallbackId);
+  const name = String(platform.name || previousPlatform?.name || `Platform ${index + 1}`).trim();
+  const protocol = normalizeProtocol(platform.protocol || previousPlatform?.protocol || "https");
+  const baseUrl = normalizeBaseUrl(platform.baseUrl || previousPlatform?.baseUrl || "");
+  if (!baseUrl) {
+    throw new Error(`baseUrl cannot be empty for platform: ${id}`);
+  }
+
+  const models = Array.from(
+    new Set(
+      splitModels(platform.models?.length ? platform.models : previousPlatform?.models || []).filter(Boolean)
+    )
+  );
+
+  if (models.length === 0) {
+    throw new Error(`At least one model is required for platform: ${id}`);
+  }
+
+  let apiKey = String(platform.apiKey ?? "").trim();
+  if (!apiKey || apiKey.includes("***")) {
+    apiKey = String(previousPlatform?.apiKey || "").trim();
+  }
+
+  return {
+    id,
+    name,
+    protocol,
+    baseUrl,
+    apiKey,
+    models,
+  };
+}
+
+function toLegacyFields(config) {
+  const activePlatform =
+    config.platforms.find((item) => item.id === config.selection.platformId) || config.platforms[0] || defaultPlatform();
+
+  return {
+    server: {
+      mode: "direct",
+      protocol: activePlatform.protocol,
+      baseUrl: activePlatform.baseUrl,
+    },
+    model: {
+      selected: config.selection.model,
+    },
+    credentials: {
+      apiKey: activePlatform.apiKey,
+    },
+  };
+}
+
+function normalizeConfig(raw, previousRaw = null) {
+  const defaults = defaultConfig();
+  const previous = previousRaw ? normalizeConfig(previousRaw) : null;
+  const previousPlatforms = new Map((previous?.platforms || []).map((item) => [item.id, item]));
+
+  let rawPlatforms = Array.isArray(raw?.platforms) ? raw.platforms : null;
+  if (!rawPlatforms || rawPlatforms.length === 0) {
+    const legacyPlatform = {
+      id: "default",
+      name: "Default",
+      protocol: raw?.server?.protocol || defaults.platforms[0].protocol,
+      baseUrl: raw?.server?.baseUrl || defaults.platforms[0].baseUrl,
+      apiKey: raw?.credentials?.apiKey || defaults.platforms[0].apiKey,
+      models: [raw?.model?.selected || defaults.selection.model],
+    };
+    rawPlatforms = [legacyPlatform];
+  }
+
+  const platforms = rawPlatforms.map((item, index) => {
+    const fallbackId = normalizePlatformId(item?.id || item?.name || item?.baseUrl || `platform-${index + 1}`, `platform-${index + 1}`);
+    return normalizePlatform(item, index, previousPlatforms.get(fallbackId) || null);
+  });
+
+  const selectedPlatformId = String(raw?.selection?.platformId || raw?.activePlatformId || raw?.selectedPlatformId || "").trim();
+  let activePlatform = platforms.find((item) => item.id === selectedPlatformId) || platforms[0];
+
+  const requestedModel = String(raw?.selection?.model || raw?.activeModel || raw?.model?.selected || "").trim();
+  const model = activePlatform.models.includes(requestedModel) ? requestedModel : activePlatform.models[0];
+
+  const normalized = {
+    meta: {
+      ...defaults.meta,
+      ...(raw?.meta || {}),
+    },
+    auth: {
+      ...defaults.auth,
+      ...(raw?.auth || {}),
+    },
+    platforms,
+    selection: {
+      platformId: activePlatform.id,
+      model,
+    },
+    permissions: {
+      ...defaults.permissions,
+      ...(raw?.permissions || {}),
+    },
+  };
+
+  return {
+    ...normalized,
+    ...toLegacyFields(normalized),
+  };
+}
+
+function loadConfig() {
+  return normalizeConfig(readJson(localPath, readJson(templatePath, defaultConfig())) || defaultConfig());
+}
+
+function sanitizeConfig(config) {
+  return {
+    ...config,
+    platforms: (config.platforms || []).map((platform) => ({
+      ...platform,
+      apiKey: maskKey(platform.apiKey),
+    })),
+    credentials: {
+      ...(config.credentials || {}),
+      apiKey: maskKey(config.credentials?.apiKey),
+    },
+  };
+}
+
 function inspectConfig(args) {
   const config = loadConfig();
   const showKey = String(args["show-key"] || "").trim().toLowerCase() === "true";
 
   printAndExit({
     ok: true,
-    config: {
-      ...config,
-      credentials: {
-        ...config.credentials,
-        apiKey: showKey ? String(config.credentials?.apiKey || "") : maskKey(config.credentials?.apiKey),
-      },
-    },
+    config: showKey
+      ? config
+      : sanitizeConfig(config),
     source: readJson(localPath, null) ? path.relative(process.cwd(), localPath) : path.relative(process.cwd(), templatePath),
   });
 }
 
 function setConfig(args) {
   const current = loadConfig();
+
+  if (args.configJson !== undefined) {
+    const parsed = JSON.parse(String(args.configJson || "{}"));
+    const next = normalizeConfig(parsed, current);
+    ensureDir(dataDir);
+    writeJson(localPath, next);
+
+    printAndExit({
+      ok: true,
+      action: "set",
+      path: path.relative(process.cwd(), localPath),
+      updated: {
+        platforms: next.platforms.map((platform) => ({
+          id: platform.id,
+          name: platform.name,
+          protocol: platform.protocol,
+          baseUrl: platform.baseUrl,
+          models: platform.models,
+          apiKeyConfigured: Boolean(platform.apiKey),
+        })),
+        selection: next.selection,
+      },
+    });
+  }
+
   const next = structuredClone(current);
+  const activePlatform = next.platforms.find((item) => item.id === next.selection.platformId) || next.platforms[0];
 
   if (args.protocol !== undefined) {
-    next.server.protocol = normalizeProtocol(args.protocol);
+    activePlatform.protocol = normalizeProtocol(args.protocol);
   }
 
   if (args.baseUrl !== undefined) {
@@ -110,33 +283,32 @@ function setConfig(args) {
     if (!normalizedBaseUrl) {
       throw new Error("baseUrl cannot be empty.");
     }
-    next.server.baseUrl = normalizedBaseUrl;
+    activePlatform.baseUrl = normalizedBaseUrl;
   }
 
   if (args.model !== undefined) {
-    next.model.selected = normalizeModel(args.model);
+    const normalizedModel = normalizeModel(args.model);
+    if (!activePlatform.models.includes(normalizedModel)) {
+      activePlatform.models.push(normalizedModel);
+    }
+    next.selection.model = normalizedModel;
   }
 
   if (args.apiKey !== undefined) {
-    next.credentials.apiKey = String(args.apiKey || "").trim();
+    activePlatform.apiKey = String(args.apiKey || "").trim();
   }
 
+  const normalized = normalizeConfig(next, current);
   ensureDir(dataDir);
-  writeJson(localPath, next);
+  writeJson(localPath, normalized);
 
   printAndExit({
     ok: true,
     action: "set",
     path: path.relative(process.cwd(), localPath),
     updated: {
-      protocol: next.server.protocol,
-      baseUrl: next.server.baseUrl,
-      model: next.model.selected,
-      apiKeyConfigured: Boolean(next.credentials.apiKey),
-    },
-    rules: {
-      ownerManaged: Boolean(next.meta?.ownerManaged),
-      singleModelOnly: Boolean(next.meta?.singleModelOnly),
+      selection: normalized.selection,
+      activePlatform: normalized.platforms.find((item) => item.id === normalized.selection.platformId),
     },
   });
 }
@@ -151,9 +323,8 @@ function resetConfig() {
     action: "reset",
     path: path.relative(process.cwd(), localPath),
     config: {
-      protocol: config.server.protocol,
-      baseUrl: config.server.baseUrl,
-      model: config.model.selected,
+      selection: config.selection,
+      platforms: config.platforms,
     },
   });
 }

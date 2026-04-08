@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-08T10:58:03.771Z",
+  "generatedAt": "2026-04-08T16:26:35.095Z",
   "totalNotes": 12,
   "notes": [
     {
@@ -494,8 +494,8 @@
       "url": "/README",
       "relativePath": "README.md",
       "category": "legacy",
-      "createdAt": "2026-04-08T03:30:41.646Z",
-      "updatedAt": "2026-04-08T10:57:56.622Z",
+      "createdAt": "2026-04-08T15:12:41.837Z",
+      "updatedAt": "2026-04-08T15:12:41.838Z",
       "contentPreview": "lcc_blog\n这是一个基于   的个人知识库项目。  \n项目目标不是单纯做博客，而是把个人笔记、外部资料整理、AI 检索和后续的站内智能助手整合成一个可持续演进的知识系统。\n项目目标\n当前项目希望解决这几件事：\n用   作为知识内容的唯一真源\n用结构化文件驱动知识库目录，而不是依赖文件夹自然生长\n让 AI 能参与新增、整理、检索、归档知识\n尽量用低 token 成本完成准确回答\n后续支持在网站内直接使用 AI 对话能力\n当前已实现\nMarkdown-first 知识库\n知识内容保存在：\n原则：\n文档内容以 Markdown 为准\nAI 不直接自由修改",
       "related": []
     }
