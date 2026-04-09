@@ -3,6 +3,28 @@
 这是一个基于 `VitePress` 的个人知识库项目。  
 项目目标不是单纯做博客，而是把个人笔记、外部资料整理、AI 检索和后续的站内智能助手整合成一个可持续演进的知识系统。
 
+## 后端现状（2026-04）
+
+- 后端服务已迁移为 `NestJS`（目录：`backend/`）
+- 运行时数据已落到 `SQLite`（文件：`data/backend.sqlite`）
+- 现有 API 保持 `/api/*` 路径兼容，便于前端继续调用
+- `scripts/kb/*.mjs` 仍保留为知识库动作执行层，NestJS 负责鉴权、会话、运行时配置与编排
+
+## 运行与排查（AI 控制台）
+
+- 启动：`pnpm dev:ai`（前端+后端）或 `pnpm dev:ai-server`（仅后端）
+- 健康检查：`curl -s http://localhost:3030/api/health`
+- 服务日志：`data/ai-server.log`（包含 `server_started` 和 `/api/chat` 分阶段耗时）
+- 若“发起请求后无响应”，优先检查：
+  - 3030 端口是否由当前仓库服务占用
+  - `data/ai-server.log` 是否有最新记录
+  - runtime 的 `baseUrl / model / apiKey` 是否配置正确
+
+当前超时策略：
+
+- 前端 API 请求超时：35s
+- 后端上游模型请求超时：30s（`AI_MODEL_TIMEOUT_MS` 可覆盖）
+
 ## 项目目标
 
 当前项目希望解决这几件事：
@@ -145,6 +167,8 @@
 
 - `pnpm docs:dev`
 - `pnpm dev:ai`
+- `pnpm dev:ai-server`
+- `pnpm backend:build`
 - `pnpm docs:build`
 - `pnpm docs:preview`
 
@@ -173,6 +197,7 @@
 本地 AI dev 流程：
 
 - `pnpm dev:ai`
+- 也可单独启动后端：`pnpm dev:ai-server`
 - 打开本地站点首页或任意知识库页面
 - 在 `header` 右侧点击 `AI` 入口展开控制台
 - 若未登录，先输入 `昵称 + userId` 登录 AI 模块
@@ -183,6 +208,8 @@
 - `notes/`：知识库正文
 - `data/docs.json`：知识库目录和信息架构
 - `data/knowledge-base.json`：构建出的知识索引
+- `data/backend.sqlite`：NestJS 运行时数据库（SQLite）
+- `backend/`：NestJS 后端源码
 - `scripts/kb/`：知识库脚本
 - `skills/`：仓库内 skill
 - `.vitepress/`：站点配置与静态构建输出
