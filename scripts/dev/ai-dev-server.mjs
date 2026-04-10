@@ -2,6 +2,7 @@ import http from "node:http";
 import { spawnSync } from "node:child_process";
 import path from "node:path";
 import crypto from "node:crypto";
+import fs from "node:fs";
 import { ensureDir, readJson, writeJson } from "../kb/shared.mjs";
 
 const PORT = Number(process.env.AI_DEV_PORT || 3030);
@@ -11,6 +12,8 @@ const runtimeTemplatePath = path.join(projectRoot, "data", "ai-runtime.example.j
 const accessLocalPath = path.join(projectRoot, "data", "ai-access.local.json");
 const accessTemplatePath = path.join(projectRoot, "data", "ai-access.example.json");
 const sessionsLocalPath = path.join(projectRoot, "data", "ai-sessions.local.json");
+const serverLogPath = path.join(projectRoot, "data", "ai-server.log");
+const MODEL_TIMEOUT_MS = Number(process.env.AI_MODEL_TIMEOUT_MS || 30000);
 
 const actionPermissions = {
   retrieve: "notes.read",
@@ -24,6 +27,15 @@ const actionPermissions = {
 
 const supportedKbActions = Object.keys(actionPermissions);
 const authSessions = new Map(Object.entries(readJson(sessionsLocalPath, { sessions: {} })?.sessions || {}));
+
+function appendServerLog(record = {}) {
+  ensureDir(path.dirname(serverLogPath));
+  const line = JSON.stringify({
+    time: new Date().toISOString(),
+    ...record,
+  });
+  fs.appendFileSync(serverLogPath, `${line}\n`, "utf8");
+}
 
 function sendJson(response, status, payload) {
   response.writeHead(status, {
@@ -360,18 +372,31 @@ async function callChatModel(messages) {
     throw new Error("AI runtime is not ready. Please configure baseUrl, model, and apiKey first.");
   }
 
-  const response = await fetch(`${protocol}://${baseUrl}/chat/completions`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model,
-      temperature: 0.2,
-      messages,
-    }),
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), MODEL_TIMEOUT_MS);
+  let response;
+  try {
+    response = await fetch(`${protocol}://${baseUrl}/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        temperature: 0.2,
+        messages,
+      }),
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if (error?.name === "AbortError") {
+      throw new Error(`Upstream model timeout after ${MODEL_TIMEOUT_MS}ms.`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
 
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
@@ -681,6 +706,7 @@ async function handleRequest(request, response) {
     }
 
     if (request.method === "POST" && url.pathname === "/api/chat") {
+      const startedAt = Date.now();
       const actor = requireAuthenticatedPermission(request, "tokens.use");
       const body = await parseRequestBody(request);
       const message = String(body.message || "").trim();
@@ -689,13 +715,23 @@ async function handleRequest(request, response) {
       }
 
       const history = normalizeHistory(body.history);
+      const plannerStartedAt = Date.now();
       const { model: plannerModel, plan } = await planChatAction({
         actor,
         message,
         history,
       });
+      const plannerDurationMs = Date.now() - plannerStartedAt;
 
       if (plan.action === "none") {
+        appendServerLog({
+          endpoint: "/api/chat",
+          actorId: actor.id,
+          action: "none",
+          plannerModel,
+          plannerDurationMs,
+          totalDurationMs: Date.now() - startedAt,
+        });
         sendJson(response, 200, {
           ok: true,
           actorId: actor.id,
@@ -716,6 +752,16 @@ async function handleRequest(request, response) {
       const allowed = (actor.permissions || []).includes(permissionRequired);
 
       if (!allowed) {
+        appendServerLog({
+          endpoint: "/api/chat",
+          actorId: actor.id,
+          action: plan.action,
+          plannerModel,
+          plannerDurationMs,
+          allowed: false,
+          permissionRequired,
+          totalDurationMs: Date.now() - startedAt,
+        });
         sendJson(response, 200, {
           ok: true,
           actorId: actor.id,
@@ -734,12 +780,14 @@ async function handleRequest(request, response) {
         plan.action,
         ...buildArgsFromRecord(plan.args || {}),
       ]);
+      const executionDurationMs = Date.now() - plannerStartedAt - plannerDurationMs;
       const executionPayload = execution.payload || { ok: execution.ok, stderr: execution.stderr };
 
       let assistantMessage = plan.reply || `已执行 ${plan.action}。`;
       let respondedBy = plannerModel;
 
       if (execution.ok) {
+        const summaryStartedAt = Date.now();
         const summary = await summarizeActionResult({
           actor,
           message,
@@ -748,6 +796,29 @@ async function handleRequest(request, response) {
         });
         assistantMessage = summary.content || assistantMessage;
         respondedBy = summary.model || respondedBy;
+        appendServerLog({
+          endpoint: "/api/chat",
+          actorId: actor.id,
+          action: plan.action,
+          plannerModel,
+          respondedBy,
+          plannerDurationMs,
+          executionDurationMs,
+          summaryDurationMs: Date.now() - summaryStartedAt,
+          executionOk: true,
+          totalDurationMs: Date.now() - startedAt,
+        });
+      } else {
+        appendServerLog({
+          endpoint: "/api/chat",
+          actorId: actor.id,
+          action: plan.action,
+          plannerModel,
+          plannerDurationMs,
+          executionDurationMs,
+          executionOk: false,
+          totalDurationMs: Date.now() - startedAt,
+        });
       }
 
       sendJson(response, execution.ok ? 200 : 400, {
@@ -815,5 +886,11 @@ const server = http.createServer((request, response) => {
 });
 
 server.listen(PORT, () => {
+  appendServerLog({
+    event: "server_started",
+    server: "legacy-http",
+    port: PORT,
+    cwd: process.cwd(),
+  });
   console.log(`AI dev server listening on http://localhost:${PORT}`);
 });

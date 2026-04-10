@@ -37,6 +37,7 @@ type ChatEntry = {
 
 const apiBase = "http://localhost:3030/api";
 const storageKey = "ai-console-token";
+const requestTimeoutMs = 35000;
 const availablePermissions = [
   "notes.read",
   "notes.create",
@@ -285,10 +286,23 @@ async function request(path: string, options: RequestInit = {}, requireAuth = tr
     headers.set("Authorization", `Bearer ${authToken.value}`);
   }
 
-  const response = await fetch(`${apiBase}${path}`, {
-    ...options,
-    headers,
-  });
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), requestTimeoutMs);
+  let response: Response;
+  try {
+    response = await fetch(`${apiBase}${path}`, {
+      ...options,
+      headers,
+      signal: controller.signal,
+    });
+  } catch (error: any) {
+    if (error?.name === "AbortError") {
+      throw new Error(`请求超时（>${requestTimeoutMs}ms）`);
+    }
+    throw error;
+  } finally {
+    window.clearTimeout(timeout);
+  }
   const data = await response.json();
   if (!response.ok || data.ok === false) {
     const message = data.error || data.stderr || "Request failed.";

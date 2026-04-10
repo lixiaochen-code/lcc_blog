@@ -1,0 +1,33 @@
+{
+  "Chrome DevTools MCP": {
+    "command": ["npx", "-y", "chrome-devtools-mcp@latest"],
+    "enabled": true,
+    "type": "local"
+  },
+  "Git": {
+    "command": ["uvx", "mcp-server-git"],
+    "enabled": true,
+    "type": "local"
+  },
+  "Puppeteer": {
+    "command": ["npx", "-y", "@modelcontextprotocol/server-puppeteer"],
+    "enabled": true,
+    "type": "local"
+  },
+  "Sequential Thinking": {
+    "command": ["npx", "-y", "@modelcontextprotocol/server-sequential-thinking"],
+    "enabled": true,
+    "type": "local"
+  },
+  "context7": {
+    "command": [
+      "npx",
+      "-y",
+      "@upstash/context7-mcp",
+      "--api-key",
+      "ctx7sk-8c60cc68-4e36-41a3-9f84-9c3d126b1c6d"
+    ],
+    "enabled": true,
+    "type": "local"
+  }
+}

@@ -1,0 +1,2 @@
+{"time":"2026-04-09T09:48:19.543Z","event":"server_started","server":"nestjs","port":3030,"cwd":"/Users/apple/Documents/ai/lcc_blog"}
+{"time":"2026-04-09T09:48:33.361Z","endpoint":"/api/chat","actorId":"owner","action":"none","plannerModel":"deepseek-ai/DeepSeek-V3.2","plannerDurationMs":3268,"totalDurationMs":3270}
