@@ -3,9 +3,8 @@
     "module": "Node16",
     "target": "es2022",
     "moduleResolution": "node16",
-    "lib": ["es2022"],
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
+    "lib": ["es2022", "dom"],
+    "types": ["node"],
     "strict": false,
     "sourceMap": true,
     "rootDir": "./src",
@@ -13,5 +12,5 @@
     "esModuleInterop": true,
     "skipLibCheck": true
   },
-  "include": ["src/**/*.ts"]
+  "include": ["src/main.ts", "src/lib/**/*.ts"]
 }
