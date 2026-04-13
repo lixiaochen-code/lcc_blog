@@ -1,2 +1,6 @@
 {"time":"2026-04-09T09:48:19.543Z","event":"server_started","server":"nestjs","port":3030,"cwd":"/Users/apple/Documents/ai/lcc_blog"}
 {"time":"2026-04-09T09:48:33.361Z","endpoint":"/api/chat","actorId":"owner","action":"none","plannerModel":"deepseek-ai/DeepSeek-V3.2","plannerDurationMs":3268,"totalDurationMs":3270}
+{"time":"2026-04-13T03:42:29.658Z","event":"server_started","server":"nestjs","port":3030,"cwd":"/Users/apple/Documents/ai/lcc_blog"}
+{"time":"2026-04-13T03:44:28.032Z","endpoint":"/api/chat","actorId":"owner","action":"inspect-url","plannerModel":"rule-based","plannerDurationMs":0,"executionDurationMs":49156,"executionOk":false,"totalDurationMs":49158}
+{"time":"2026-04-13T03:54:34.388Z","event":"server_started","server":"nestjs","port":3030,"cwd":"/Users/apple/Documents/ai/lcc_blog"}
+{"time":"2026-04-13T03:55:51.145Z","endpoint":"/api/chat","actorId":"owner","action":"inspect-url","plannerModel":"rule-based","plannerDurationMs":0,"executionDurationMs":49857,"executionOk":false,"totalDurationMs":49858}

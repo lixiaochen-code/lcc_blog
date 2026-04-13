@@ -76,7 +76,7 @@ if (!action) {
     {
       ok: false,
       error: "Missing --action",
-      supportedActions: ["retrieve", "add", "append", "update-meta"],
+      supportedActions: ["retrieve", "add", "append", "update-meta", "delete", "inspect-url", "ingest-url", "build"],
     },
     1
   );
@@ -294,11 +294,20 @@ if (action === "ingest-url") {
   printAndExit(result, result.ok ? 0 : 1);
 }
 
+if (action === "build") {
+  runKbBuild();
+  printAndExit({
+    ok: true,
+    action,
+    message: "Knowledge base built.",
+  });
+}
+
 printAndExit(
   {
     ok: false,
     error: `Unsupported action: ${action}`,
-    supportedActions: ["retrieve", "add", "append", "update-meta", "delete", "inspect-url", "ingest-url"],
+    supportedActions: ["retrieve", "add", "append", "update-meta", "delete", "inspect-url", "ingest-url", "build"],
   },
   1
 );

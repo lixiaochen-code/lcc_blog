@@ -44,6 +44,9 @@ importers:
       typeorm:
         specifier: ^0.3.28
         version: 0.3.28(sql.js@1.14.1)(sqlite3@5.1.7)(ts-node@10.9.2(@types/node@25.5.2)(typescript@6.0.2))
+      undici:
+        specifier: ^8.0.3
+        version: 8.0.3
     devDependencies:
       '@nestjs/cli':
         specifier: ^11.0.18
@@ -2703,6 +2706,10 @@ packages:
 
   undici-types@7.18.2:
     resolution: {integrity: sha512-AsuCzffGHJybSaRrmr5eHr81mwJU3kjw6M+uprWvCXiNeN9SOGwQ3Jn8jb8m3Z6izVgknn1R0FTCEAP2QrLY/w==}
+
+  undici@8.0.3:
+    resolution: {integrity: sha512-vTLEG/ceXgu/dMTQ8uNE2zgl7I7qEkx9l9tkz2H802AkgbBMvbmHMu4YqsrpGbUAMYKSQhCbmjsWMAeGu1dYXg==}
+    engines: {node: '>=22.19.0'}
 
   unique-filename@1.1.1:
     resolution: {integrity: sha512-Vmp0jIp2ln35UTXuryvjzkjGdRyf9b2lTXuSYUiPmzRcl3FDtYqAwOnTJkAngD9SWhnoJzDbTKwaOrZ+STtxNQ==}
@@ -5551,6 +5558,8 @@ snapshots:
   uint8array-extras@1.5.0: {}
 
   undici-types@7.18.2: {}
+
+  undici@8.0.3: {}
 
   unique-filename@1.1.1:
     dependencies:

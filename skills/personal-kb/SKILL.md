@@ -31,6 +31,7 @@ For note creation or updates, convert the user intent into one of these actions:
 - `add`
 - `append`
 - `update-meta`
+- `build`
 
 Then execute `pnpm kb:agent` with structured arguments instead of editing files freehand.
 
@@ -40,6 +41,7 @@ Then execute `pnpm kb:agent` with structured arguments instead of editing files 
 - `pnpm kb:agent --action add --title "标题" --category inbox --tags 标签1,标签2 --summary "摘要" --content "正文"`
 - `pnpm kb:agent --action append --slug note-slug --section "补充" --append "新增内容"`
 - `pnpm kb:agent --action update-meta --slug note-slug --summary "新摘要" --tags 标签1,标签2`
+- `pnpm kb:agent --action build`
 
 ## When direct file reads are still okay
 

@@ -24,6 +24,9 @@
 
 - 前端 API 请求超时：35s
 - 后端上游模型请求超时：30s（`AI_MODEL_TIMEOUT_MS` 可覆盖）
+- 外部请求代理：`AI_URL_PROXY`
+  - 未设置时直连
+  - 用于 AI 模型请求以及外部链接抓取（`inspect-url` / `ingest-url`）
 
 ## 项目目标
 
@@ -41,7 +44,7 @@
 
 知识内容保存在：
 
-- [`notes/`](/Users/lichen/Documents/我的项目/lcc_blog/notes)
+- [`notes/`](notes/)
 
 原则：
 
@@ -53,7 +56,7 @@
 
 知识库的信息架构由：
 
-- [`data/docs.json`](/Users/lichen/Documents/我的项目/lcc_blog/data/docs.json)
+- [`data/docs.json`](data/docs.json)
 
 驱动。
 
@@ -96,10 +99,11 @@
 - `retrieve`
 - `inspect-url`
 - `ingest-url`
+- `build`
 
 核心入口：
 
-- [`scripts/kb/agent.mjs`](/Users/lichen/Documents/我的项目/lcc_blog/scripts/kb/agent.mjs)
+- [`scripts/kb/agent.mjs`](scripts/kb/agent.mjs)
 
 补充说明：
 
@@ -113,7 +117,7 @@
 
 运行时配置模板：
 
-- [`data/ai-runtime.example.json`](/Users/lichen/Documents/我的项目/lcc_blog/data/ai-runtime.example.json)
+- [`data/ai-runtime.example.json`](data/ai-runtime.example.json)
 
 服务器本地私有配置：
 
@@ -158,8 +162,8 @@
 
 相关脚本：
 
-- [`scripts/kb/url.mjs`](/Users/lichen/Documents/我的项目/lcc_blog/scripts/kb/url.mjs)
-- [`scripts/kb/extract_article.py`](/Users/lichen/Documents/我的项目/lcc_blog/scripts/kb/extract_article.py)
+- [`scripts/kb/url.mjs`](scripts/kb/url.mjs)
+- [`scripts/kb/extract_article.py`](scripts/kb/extract_article.py)
 
 ## 当前命令
 
@@ -183,6 +187,7 @@
 - `pnpm kb:agent --action add --title "标题" --category inbox --content "正文" --build false`
 - `pnpm kb:agent --action append --slug getting-started --append "补充内容" --build false`
 - `pnpm kb:agent --action ingest-url --url "https://example.com"`
+- `pnpm kb:agent --action build`
 - `pnpm kb:runtime-config --action inspect`
 - `pnpm kb:runtime-config --action set --protocol https --baseUrl api.siliconflow.cn/v1 --model deepseek-ai/DeepSeek-V3.2`
 - `pnpm kb:access --action inspect`

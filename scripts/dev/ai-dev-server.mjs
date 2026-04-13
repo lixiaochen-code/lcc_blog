@@ -3,6 +3,7 @@ import { spawnSync } from "node:child_process";
 import path from "node:path";
 import crypto from "node:crypto";
 import fs from "node:fs";
+import { ProxyAgent } from "undici";
 import { ensureDir, readJson, writeJson } from "../kb/shared.mjs";
 
 const PORT = Number(process.env.AI_DEV_PORT || 3030);
@@ -15,6 +16,21 @@ const sessionsLocalPath = path.join(projectRoot, "data", "ai-sessions.local.json
 const serverLogPath = path.join(projectRoot, "data", "ai-server.log");
 const MODEL_TIMEOUT_MS = Number(process.env.AI_MODEL_TIMEOUT_MS || 30000);
 
+function normalizeProxyUrl(value) {
+  const raw = String(value || "").trim();
+  if (!raw) {
+    return "";
+  }
+  if (/^https?:\/\//i.test(raw) || /^socks5?:\/\//i.test(raw)) {
+    return raw;
+  }
+  return `http://${raw}`;
+}
+
+function getProxyUrl() {
+  return normalizeProxyUrl(process.env.AI_URL_PROXY);
+}
+
 const actionPermissions = {
   retrieve: "notes.read",
   add: "notes.create",
@@ -23,10 +39,13 @@ const actionPermissions = {
   delete: "notes.delete",
   "inspect-url": "notes.read",
   "ingest-url": "kb.ingest_url",
+  build: "site.build",
 };
 
 const supportedKbActions = Object.keys(actionPermissions);
 const authSessions = new Map(Object.entries(readJson(sessionsLocalPath, { sessions: {} })?.sessions || {}));
+const proxyUrl = getProxyUrl();
+const proxyAgent = proxyUrl ? new ProxyAgent(proxyUrl) : null;
 
 function appendServerLog(record = {}) {
   ensureDir(path.dirname(serverLogPath));
@@ -340,6 +359,49 @@ function normalizeHistory(history) {
     .filter((entry) => entry.content);
 }
 
+function detectDirectAction(message) {
+  const text = String(message || "").trim().toLowerCase();
+  if (!text) {
+    return null;
+  }
+
+  const matchedUrl = text.match(/https?:\/\/\S+/i)?.[0] || "";
+  const wantsProjectSummary = /这个项目|项目主要|项目是干什么|what.*project|about.*project/.test(text);
+  const wantsIngest = /导入|收录|保存到知识库|ingest/.test(text);
+  if (matchedUrl && !wantsIngest && wantsProjectSummary) {
+    return {
+      intent: "inspect external url and summarize project purpose",
+      action: "inspect-url",
+      args: { url: matchedUrl },
+      title: "解析链接内容",
+      reply: "收到，我先解析这个链接并给你总结项目用途。",
+    };
+  }
+
+  const rebuildPatterns = [
+    /整理.*知识库/,
+    /重建.*知识库/,
+    /刷新.*知识库/,
+    /重建.*索引/,
+    /刷新.*索引/,
+    /重组.*目录/,
+    /\bkb\s*build\b/,
+    /\bbuild\s*(kb|knowledge)\b/,
+  ];
+
+  if (rebuildPatterns.some((pattern) => pattern.test(text))) {
+    return {
+      intent: "rebuild knowledge base index and navigation",
+      action: "build",
+      args: {},
+      title: "整理知识库",
+      reply: "收到，开始整理知识库并重建索引。",
+    };
+  }
+
+  return null;
+}
+
 function extractJsonFromText(text) {
   const raw = String(text || "").trim();
   if (!raw) {
@@ -388,6 +450,7 @@ async function callChatModel(messages) {
         messages,
       }),
       signal: controller.signal,
+      ...(proxyAgent ? { dispatcher: proxyAgent } : {}),
     });
   } catch (error) {
     if (error?.name === "AbortError") {
@@ -425,7 +488,7 @@ async function planChatAction({ actor, message, history }) {
         `Supported actions: ${supportedKbActions.join(", ")}.`,
         'If no action should be executed, use "none".',
         "Return JSON only with this schema:",
-        '{"intent":"...", "action":"retrieve|add|append|update-meta|delete|inspect-url|ingest-url|none", "args":{}, "title":"short label", "reply":"one short Chinese sentence to the user"}',
+        '{"intent":"...", "action":"retrieve|add|append|update-meta|delete|inspect-url|ingest-url|build|none", "args":{}, "title":"short label", "reply":"one short Chinese sentence to the user"}',
         "Rules:",
         "- Prefer retrieve for questions, search, lookups, and reading requests.",
         "- Prefer add only when the user clearly wants a new note created.",
@@ -433,6 +496,7 @@ async function planChatAction({ actor, message, history }) {
         "- Prefer update-meta only for metadata edits like title, summary, tags, aliases, or category.",
         "- Prefer delete only when the user explicitly asks to delete.",
         "- Prefer inspect-url or ingest-url only when a URL is present.",
+        "- Prefer build when user asks to organize/rebuild/refresh the whole knowledge base or index.",
         "- Never invent file paths. Use slug/title references from the user.",
         "- Keep args minimal and only include keys required by the chosen action.",
       ].join("\n"),
@@ -716,11 +780,14 @@ async function handleRequest(request, response) {
 
       const history = normalizeHistory(body.history);
       const plannerStartedAt = Date.now();
-      const { model: plannerModel, plan } = await planChatAction({
-        actor,
-        message,
-        history,
-      });
+      const directPlan = detectDirectAction(message);
+      const { model: plannerModel, plan } = directPlan
+        ? { model: "rule-based", plan: directPlan }
+        : await planChatAction({
+            actor,
+            message,
+            history,
+          });
       const plannerDurationMs = Date.now() - plannerStartedAt;
 
       if (plan.action === "none") {
@@ -775,11 +842,13 @@ async function handleRequest(request, response) {
         return;
       }
 
-      const execution = runNodeScript("scripts/kb/agent.mjs", [
-        "--action",
-        plan.action,
-        ...buildArgsFromRecord(plan.args || {}),
-      ]);
+      const execution = plan.action === "build"
+        ? runNodeScript("scripts/kb/build.mjs")
+        : runNodeScript("scripts/kb/agent.mjs", [
+            "--action",
+            plan.action,
+            ...buildArgsFromRecord(plan.args || {}),
+          ]);
       const executionDurationMs = Date.now() - plannerStartedAt - plannerDurationMs;
       const executionPayload = execution.payload || { ok: execution.ok, stderr: execution.stderr };
 

@@ -16,7 +16,7 @@ function defaultPlatform() {
     name: "SiliconFlow",
     protocol: "https",
     baseUrl: "api.siliconflow.cn/v1",
-    apiKey: "sk-fmaikibtizeoeamejcwulgzezwvqgawcoeivwrkzuornoshj",
+    apiKey: "YOUR_API_KEY_HERE",
     models: ["deepseek-ai/DeepSeek-V3.2"],
   };
 }

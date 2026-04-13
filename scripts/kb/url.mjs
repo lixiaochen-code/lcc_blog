@@ -22,12 +22,45 @@ const KNOWN_CHROME_PATHS = [
   "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
 ].filter(Boolean);
 
+function normalizeProxyUrl(value) {
+  const raw = String(value || "").trim();
+  if (!raw) {
+    return "";
+  }
+  if (/^https?:\/\//i.test(raw) || /^socks5?:\/\//i.test(raw)) {
+    return raw;
+  }
+  return `http://${raw}`;
+}
+
+function getProxyUrl() {
+  return normalizeProxyUrl(process.env.AI_URL_PROXY);
+}
+
+function getProxyEnv() {
+  const proxyUrl = getProxyUrl();
+  if (!proxyUrl) {
+    return process.env;
+  }
+  return {
+    ...process.env,
+    AI_URL_PROXY: proxyUrl,
+    HTTP_PROXY: proxyUrl,
+    HTTPS_PROXY: proxyUrl,
+    ALL_PROXY: proxyUrl,
+    http_proxy: proxyUrl,
+    https_proxy: proxyUrl,
+    all_proxy: proxyUrl,
+  };
+}
+
 function runCommand(command, args, options = {}) {
   const result = spawnSync(command, args, {
     cwd: process.cwd(),
     encoding: "utf8",
     input: options.input,
     maxBuffer: 20 * 1024 * 1024,
+    env: getProxyEnv(),
   });
 
   return {
@@ -44,6 +77,7 @@ function escapeUrl(url) {
 
 function fetchWithCurl(url) {
   return runCommand("curl", [
+    "-sS",
     "-L",
     "--compressed",
     "--max-time",
@@ -68,6 +102,7 @@ function findChromeExecutable() {
 
 function fetchWithChrome(url) {
   const chromePath = findChromeExecutable();
+  const proxyUrl = getProxyUrl();
   if (!chromePath) {
     return {
       ok: false,
@@ -85,6 +120,7 @@ function fetchWithChrome(url) {
     "--disable-dev-shm-usage",
     "--hide-scrollbars",
     "--virtual-time-budget=12000",
+    ...(proxyUrl ? [`--proxy-server=${proxyUrl}`] : []),
     `--user-data-dir=${userDataDir}`,
     `--user-agent=${DEFAULT_UA}`,
     "--dump-dom",
@@ -228,7 +264,10 @@ export function inspectUrl(url, options = {}) {
     ok: false,
     strategy: "none",
     article: null,
-    error: browserResult.stderr || curlResult.stderr || "Failed to fetch URL.",
+    error:
+      browserResult.stderr?.trim() ||
+      curlResult.stderr?.trim() ||
+      "Failed to fetch URL.",
     strategies,
   };
 }

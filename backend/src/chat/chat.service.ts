@@ -1,5 +1,7 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
+import { ProxyAgent } from "undici";
 import { RuntimeService } from "../runtime/runtime.service";
+import { getProxyUrl } from "../common/proxy";
 
 const MODEL_TIMEOUT_MS = Number(process.env.AI_MODEL_TIMEOUT_MS || 30000);
 
@@ -15,6 +17,8 @@ const actionPermissions: Record<string, string> = {
 };
 
 const supportedKbActions = Object.keys(actionPermissions);
+const proxyUrl = getProxyUrl();
+const proxyAgent = proxyUrl ? new ProxyAgent(proxyUrl) : null;
 
 @Injectable()
 export class ChatService {
@@ -23,6 +27,19 @@ export class ChatService {
   detectDirectAction(message: string) {
     const text = String(message || "").trim().toLowerCase();
     if (!text) return null;
+    const matchedUrl = text.match(/https?:\/\/\S+/i)?.[0] || "";
+    const wantsProjectSummary = /这个项目|项目主要|项目是干什么|what.*project|about.*project/.test(text);
+    const wantsIngest = /导入|收录|保存到知识库|ingest/.test(text);
+    if (matchedUrl && !wantsIngest && wantsProjectSummary) {
+      return {
+        intent: "inspect external url and summarize project purpose",
+        action: "inspect-url",
+        args: { url: matchedUrl },
+        title: "解析链接内容",
+        reply: "收到，我先解析这个链接并给你总结项目用途。",
+      };
+    }
+
     const rebuildPatterns = [
       /整理.*知识库/,
       /重建.*知识库/,
@@ -116,7 +133,8 @@ export class ChatService {
           messages,
         }),
         signal: controller.signal,
-      });
+        ...(proxyAgent ? { dispatcher: proxyAgent } : {}),
+      } as RequestInit & { dispatcher?: ProxyAgent });
     } catch (error: any) {
       if (error?.name === "AbortError") {
         throw new BadRequestException(`Upstream model timeout after ${MODEL_TIMEOUT_MS}ms.`);

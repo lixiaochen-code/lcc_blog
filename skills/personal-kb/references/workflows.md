@@ -45,3 +45,11 @@ When only title, tags, aliases, summary, or category changed:
 ```bash
 pnpm kb:agent --action update-meta --slug 对话式知识库接入设想 --summary "更聚焦的新摘要" --tags 知识库,AI,检索
 ```
+
+## Rebuild knowledge base index
+
+When the user asks to reorganize or refresh the knowledge base index:
+
+```bash
+pnpm kb:agent --action build
+```
