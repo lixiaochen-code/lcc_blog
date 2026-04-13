@@ -40,9 +40,26 @@ export class ChatController {
     const history = this.chatService.normalizeHistory(body.history || []);
     const plannerStartedAt = Date.now();
     const directPlan = this.chatService.detectDirectAction(message);
-    const { model: plannerModel, plan } = directPlan
-      ? { model: "rule-based", plan: directPlan }
-      : await this.chatService.planChatAction({ actor, message, history });
+    let plannerModel = "rule-based";
+    let plan = directPlan;
+    let plannerError = "";
+
+    if (!plan) {
+      try {
+        const planned = await this.chatService.planChatAction({ actor, message, history });
+        plannerModel = planned.model;
+        plan = planned.plan;
+      } catch (error: any) {
+        plannerError = error?.message || "Planner failed.";
+        plan = {
+          intent: "planner unavailable",
+          action: "none",
+          args: {},
+          title: "AI 计划",
+          reply: "当前无法调用上游模型做自由规划。你可以直接说“查看知识库内容”，或用“标题/内容/URL”这种更明确的格式让我执行知识库动作。",
+        };
+      }
+    }
     const plannerDurationMs = Date.now() - plannerStartedAt;
 
     if (plan.action === "none") {
@@ -50,6 +67,7 @@ export class ChatController {
         actorId: actor.id,
         action: "none",
         plannerModel,
+        plannerError: plannerError || undefined,
         plannerDurationMs,
         totalDurationMs: Date.now() - startedAt,
       });
@@ -60,6 +78,7 @@ export class ChatController {
         plan,
         executed: false,
         allowed: true,
+        plannerError: plannerError || undefined,
         assistantMessage: plan.reply || "这次不需要执行知识库动作，我先直接回复你。",
       };
     }
@@ -106,19 +125,29 @@ export class ChatController {
 
     if (execution.ok) {
       const summaryStartedAt = Date.now();
-      const summary = await this.chatService.summarizeActionResult({
-        actor,
-        message,
-        plan: { action: plan.action, args: plan.args || {} },
-        execution: executionPayload,
-      });
-      assistantMessage = summary.content || assistantMessage;
-      respondedBy = summary.model || respondedBy;
+      try {
+        const summary = await this.chatService.summarizeActionResult({
+          actor,
+          message,
+          plan: { action: plan.action, args: plan.args || {} },
+          execution: executionPayload,
+        });
+        assistantMessage = summary.content || assistantMessage;
+        respondedBy = summary.model || respondedBy;
+      } catch {
+        assistantMessage = this.chatService.summarizeActionResultLocally({
+          message,
+          plan: { action: plan.action, args: plan.args || {} },
+          execution: executionPayload,
+        });
+        respondedBy = "local-fallback";
+      }
       log({
         actorId: actor.id,
         action: plan.action,
         plannerModel,
         respondedBy,
+        plannerError: plannerError || undefined,
         plannerDurationMs,
         executionDurationMs,
         summaryDurationMs: Date.now() - summaryStartedAt,
@@ -130,6 +159,7 @@ export class ChatController {
         actorId: actor.id,
         action: plan.action,
         plannerModel,
+        plannerError: plannerError || undefined,
         plannerDurationMs,
         executionDurationMs,
         executionOk: execution.ok,
@@ -148,6 +178,7 @@ export class ChatController {
       permissionRequired,
       result: executionPayload,
       stderr: execution.stderr,
+      plannerError: plannerError || undefined,
       assistantMessage,
     };
   }

@@ -52,6 +52,7 @@ description: "由 docs.json 驱动的个人知识库目录"
 
 外部项目、工具链和可复用基础设施的整理笔记。
 
+- [Awesome APIs 中文资源总结](/notes/tools/awesome-apis-中文资源总结) · 标签：api、开发资源、github、awesome-list
 - [CLIProxyAPI 项目整理](/notes/tools/CLIProxyAPI 项目整理) · 标签：AI 工具、代理服务、OpenAI 兼容、Claude、Gemini、Codex
 
 ## 网页摘录
@@ -59,9 +60,3 @@ description: "由 docs.json 驱动的个人知识库目录"
 从外部网页、公众号或文章链接导入的内容。
 
 - [杀疯了！前端最强 10 个 AI Skills ！效率提升500%！](/notes/web-clips/杀疯了-前端最强-10-个-ai-skills-效率提升500) · 标签：微信、AI、前端
-
-## 待整理
-
-AI 尚未完成归档或还未明确位置的文档。
-
-- [Awesome APIs 中文资源总结](/notes/tools/awesome-apis-中文资源总结) · 标签：api、开发资源、github、awesome-list

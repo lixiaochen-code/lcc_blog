@@ -7,6 +7,8 @@ const actionPermissions: Record<string, string> = {
   retrieve: "notes.read",
   add: "notes.create",
   append: "notes.update",
+  "append-from-url": "kb.ingest_url",
+  "organize-entry": "docs.reorganize",
   "update-meta": "notes.update",
   delete: "notes.delete",
   "inspect-url": "notes.read",

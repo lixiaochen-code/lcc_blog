@@ -38,10 +38,18 @@ export function writeJson(filePath, value) {
 export function runKbBuild() {
   const result = spawnSync(process.execPath, [path.join(projectRoot, "scripts", "kb", "build.mjs")], {
     cwd: projectRoot,
-    stdio: "inherit",
+    encoding: "utf8",
   });
 
   if (result.status !== 0) {
+    const stdout = String(result.stdout || "").trim();
+    const stderr = String(result.stderr || "").trim();
+    if (stdout) {
+      console.error(stdout);
+    }
+    if (stderr) {
+      console.error(stderr);
+    }
     process.exit(result.status ?? 1);
   }
 }
@@ -389,6 +397,70 @@ export function tokenizeQuery(query) {
   }
 
   return [trimmed];
+}
+
+export function isOverviewQuery(query) {
+  const normalized = String(query || "").trim().toLowerCase();
+  if (!normalized) {
+    return false;
+  }
+
+  const patterns = [
+    /(当前|现在|目前)?知识库.*(哪些|什么|啥|内容|笔记|文章|资料|文档|目录|分类)/,
+    /(查看|列出|展示|浏览|看看).*(知识库|笔记|文章|目录|内容)/,
+    /(知识库|笔记|文章|目录|内容).*(概览|总览|overview|list|contents)/,
+    /(有哪些内容|有什么内容|都有什么|有哪些笔记|有哪些文章)/,
+  ];
+
+  return patterns.some((pattern) => pattern.test(normalized));
+}
+
+export function buildKnowledgeBaseOverview(notes, options = {}) {
+  const latestLimit = Number(options.latestLimit || 8);
+  const categories = new Map();
+
+  for (const note of notes) {
+    const category = String(note.category || "uncategorized").trim() || "uncategorized";
+    const current = categories.get(category) || {
+      category,
+      count: 0,
+      latestUpdatedAt: "",
+      sampleTitles: [],
+    };
+    current.count += 1;
+    if (!current.latestUpdatedAt || String(note.updatedAt) > String(current.latestUpdatedAt)) {
+      current.latestUpdatedAt = note.updatedAt;
+    }
+    if (current.sampleTitles.length < 3) {
+      current.sampleTitles.push(note.title);
+    }
+    categories.set(category, current);
+  }
+
+  const latestNotes = [...notes]
+    .sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)))
+    .slice(0, latestLimit)
+    .map((note) => ({
+      title: note.title,
+      path: note.relativePath,
+      url: note.url,
+      summary: note.summary,
+      tags: note.tags,
+      updatedAt: note.updatedAt,
+      category: note.category,
+    }));
+
+  return {
+    totalNotes: notes.length,
+    totalCategories: categories.size,
+    categories: [...categories.values()].sort((a, b) => {
+      if (b.count !== a.count) {
+        return b.count - a.count;
+      }
+      return a.category.localeCompare(b.category, "zh-Hans-CN");
+    }),
+    latestNotes,
+  };
 }
 
 export function buildSnippet(note, query) {

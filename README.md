@@ -95,6 +95,7 @@
 
 - `add`
 - `append`
+- `append-from-url`
 - `update-meta`
 - `retrieve`
 - `inspect-url`
@@ -110,6 +111,8 @@
 - `kb:agent` 的写入动作默认只修改开发环境源码
 - 只有显式传入 `--build true` 时，才会在写入后自动执行知识库重建
 - 这更适合后续接入“生产 AI 修改开发环境、由 owner 决定是否发布”的流程
+- `retrieve` 现在支持“知识库概览”场景，例如“当前知识库有哪些内容”
+- `append-from-url` 支持先解析网页，再把提炼内容补充到已有笔记
 
 ### 5. 运行时配置、登录与权限控制
 
@@ -186,6 +189,7 @@
 - `pnpm kb:agent --action retrieve --query "问题"`
 - `pnpm kb:agent --action add --title "标题" --category inbox --content "正文" --build false`
 - `pnpm kb:agent --action append --slug getting-started --append "补充内容" --build false`
+- `pnpm kb:agent --action append-from-url --slug vite学习笔记 --url "https://example.com" --section "外部资料补充" --build false`
 - `pnpm kb:agent --action ingest-url --url "https://example.com"`
 - `pnpm kb:agent --action build`
 - `pnpm kb:runtime-config --action inspect`
@@ -207,6 +211,12 @@
 - 在 `header` 右侧点击 `AI` 入口展开控制台
 - 若未登录，先输入 `昵称 + userId` 登录 AI 模块
 - 控制台会连接 `http://localhost:3030/api/*`
+- 常见自然语言闭环：
+  - “当前知识库有哪些内容”
+  - “新增一篇笔记，标题：xxx，分类：inbox，内容：xxx”
+  - “给《某篇笔记》补充：xxx”
+  - “把 https://example.com 收录到知识库”
+  - “把 https://example.com 补充到《某篇笔记》”
 
 ## 当前目录约定
 
@@ -241,9 +251,11 @@
 - 能新增知识
 - 能修改知识
 - 能检索知识
+- 能查看知识库概览
 - 能自动整理目录
 - 能根据 `docs.json` 重组结构
 - 能导入网页、文章、外部资料
+- 能把外部网页内容追加到已有笔记
 
 ### B. AI 驱动
 

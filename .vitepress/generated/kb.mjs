@@ -76,6 +76,10 @@ export const kbSidebar = {
       "text": "开发工具",
       "items": [
         {
+          "text": "Awesome APIs 中文资源总结",
+          "link": "/notes/tools/awesome-apis-中文资源总结"
+        },
+        {
           "text": "CLIProxyAPI",
           "link": "/notes/tools/CLIProxyAPI 项目整理"
         }
@@ -87,15 +91,6 @@ export const kbSidebar = {
         {
           "text": "前端 AI Skills",
           "link": "/notes/web-clips/杀疯了-前端最强-10-个-ai-skills-效率提升500"
-        }
-      ]
-    },
-    {
-      "text": "待整理",
-      "items": [
-        {
-          "text": "Awesome APIs 中文资源总结",
-          "link": "/notes/tools/awesome-apis-中文资源总结"
         }
       ]
     }

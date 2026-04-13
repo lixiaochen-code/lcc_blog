@@ -147,6 +147,16 @@
       "hidden": false
     },
     {
+      "path": "notes/tools/awesome-apis-中文资源总结.md",
+      "title": "Awesome APIs 中文资源总结",
+      "shortTitle": "",
+      "description": "Awesome APIs 中文资源总结",
+      "section": "tools",
+      "order": -202604081641,
+      "featured": false,
+      "hidden": false
+    },
+    {
       "path": "notes/tools/开发AI工作台.md",
       "title": "AI 控制台接入说明",
       "shortTitle": "控制台说明",
@@ -163,16 +173,6 @@
       "description": "整理 CLIProxyAPI 的定位、核心能力与适用场景，方便后续快速判断它是否适合作为统一代理层。",
       "section": "tools",
       "order": 10,
-      "featured": false,
-      "hidden": false
-    },
-    {
-      "path": "notes/tools/awesome-apis-中文资源总结.md",
-      "title": "Awesome APIs 中文资源总结",
-      "shortTitle": "",
-      "description": "Awesome APIs 中文资源总结",
-      "section": "unassigned",
-      "order": -202604081641,
       "featured": false,
       "hidden": false
     },

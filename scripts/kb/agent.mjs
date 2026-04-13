@@ -1,7 +1,10 @@
 import fs from "node:fs";
 import path from "node:path";
 import {
+  dataDir,
+  buildKnowledgeBaseOverview,
   getAllNotes,
+  isOverviewQuery,
   makeNoteDocument,
   notesDir,
   parseArgs,
@@ -16,6 +19,53 @@ import {
   writeText,
 } from "./shared.mjs";
 import { ingestUrl, inspectUrl } from "./url.mjs";
+
+const docsConfigPath = path.join(dataDir, "docs.json");
+
+function inferSectionIdFromNote(note) {
+  if (note.relativePath === "notes/inbox/getting-started.md") {
+    return "start";
+  }
+  if (note.category === "inbox") {
+    return "start";
+  }
+  if (note.category === "architecture") {
+    return "design";
+  }
+  if (note.category === "retrieval") {
+    return "retrieval";
+  }
+  if (note.category === "frontend") {
+    return "frontend";
+  }
+  if (note.category === "tools") {
+    return "tools";
+  }
+  if (note.category === "web-clips") {
+    return "web-clips";
+  }
+  if (!note.relativePath.startsWith("notes/")) {
+    return "pages";
+  }
+  return "unassigned";
+}
+
+function resolveSectionId(sectionRef, config, note) {
+  const sections = Array.isArray(config?.sections) ? config.sections : [];
+  const normalizedRef = String(sectionRef || "").trim().toLowerCase();
+
+  if (!normalizedRef) {
+    return inferSectionIdFromNote(note);
+  }
+
+  const matched = sections.find((section) => {
+    const id = String(section.id || "").trim().toLowerCase();
+    const title = String(section.title || "").trim().toLowerCase();
+    return id === normalizedRef || title === normalizedRef;
+  });
+
+  return matched?.id || inferSectionIdFromNote(note);
+}
 
 function printAndExit(payload, code = 0) {
   console.log(`${JSON.stringify(payload, null, 2)}\n`);
@@ -76,7 +126,18 @@ if (!action) {
     {
       ok: false,
       error: "Missing --action",
-      supportedActions: ["retrieve", "add", "append", "update-meta", "delete", "inspect-url", "ingest-url", "build"],
+      supportedActions: [
+        "retrieve",
+        "add",
+        "append",
+        "append-from-url",
+        "organize-entry",
+        "update-meta",
+        "delete",
+        "inspect-url",
+        "ingest-url",
+        "build",
+      ],
     },
     1
   );
@@ -91,6 +152,28 @@ if (action === "retrieve") {
   }
 
   const notes = getAllNotes();
+  const overviewRequested =
+    shouldBuildFromArgs({ build: args.overview }, false) ||
+    isOverviewQuery(query);
+
+  if (overviewRequested) {
+    const overview = buildKnowledgeBaseOverview(notes, { latestLimit: limit });
+    printAndExit({
+      ok: true,
+      action,
+      query,
+      mode: "overview",
+      strategy: "knowledge-base overview with latest notes and category distribution",
+      answerGuidance: [
+        "Answer from the overview only.",
+        "Prefer mentioning category counts and recently updated notes.",
+        "If the user wants details about one topic, suggest a narrower retrieval query.",
+      ],
+      overview,
+      results: overview.latestNotes,
+    });
+  }
+
   const results = searchNotes(notes, query, limit).map(compactResult);
 
   printAndExit({
@@ -196,6 +279,146 @@ if (action === "append") {
     action,
     path: target.relativePath,
     section: String(args.section || "").trim() || null,
+    buildTriggered,
+  });
+}
+
+if (action === "append-from-url") {
+  const noteRef = String(args.file || args.id || args.slug || args.title || args.target || "").trim();
+  const url = String(args.url || "").trim();
+
+  if (!noteRef || !url) {
+    printAndExit(
+      {
+        ok: false,
+        error: "append-from-url action requires a note reference and --url.",
+      },
+      1
+    );
+  }
+
+  const target = findTargetNote(noteRef);
+  if (!target) {
+    printAndExit({ ok: false, error: `Note not found: ${noteRef}` }, 1);
+  }
+
+  const inspected = inspectUrl(url, args);
+  if (!inspected.ok || !inspected.article) {
+    printAndExit(
+      {
+        ok: false,
+        action,
+        error: inspected.error || "Failed to inspect URL.",
+        result: compactUrlResult(inspected),
+      },
+      1
+    );
+  }
+
+  const raw = readText(target.absolutePath);
+  const { data, body } = parseFrontmatter(raw);
+  const updatedAt = new Date().toISOString();
+  const nextFrontmatter = { ...data, updatedAt };
+  const sectionTitle = String(args.section || "").trim() || `外部资料补充 ${updatedAt.slice(0, 10)}`;
+  const contentMode = String(args.contentMode || args.mode || "").trim().toLowerCase();
+  const article = inspected.article;
+  const summary = String(
+    args.summary ||
+    article.description ||
+    article.excerpt ||
+    ""
+  ).trim();
+  const excerptSource = String(article.contentMarkdown || article.plainText || "").trim();
+  const excerpt =
+    contentMode === "full"
+      ? excerptSource
+      : excerptSource.slice(0, Number(args.maxChars || 1200)).trim();
+
+  const appendLines = [
+    `## ${sectionTitle}`,
+    "",
+    `> 来源：[${article.title || article.siteName || article.url}](${article.url})`,
+    article.siteName ? `> 站点：${article.siteName}` : "",
+    article.author ? `> 作者：${article.author}` : "",
+    article.publishedAt ? `> 发布时间：${article.publishedAt}` : "",
+    `> 抓取方式：${inspected.strategy}`,
+    summary ? `> 摘要：${summary}` : "",
+    "",
+    excerpt,
+    "",
+  ].filter(Boolean);
+
+  const nextBody = `${body.trimEnd()}\n\n${appendLines.join("\n")}\n`;
+  const buildTriggered = shouldBuildFromArgs(args, false);
+
+  writeText(target.absolutePath, `${toFrontmatter(nextFrontmatter)}${nextBody}`);
+  if (buildTriggered) {
+    runKbBuild();
+  }
+
+  printAndExit({
+    ok: true,
+    action,
+    path: target.relativePath,
+    sourceUrl: article.url,
+    sourceTitle: article.title || article.siteName || article.url,
+    section: sectionTitle,
+    contentMode: contentMode === "full" ? "full" : "summary",
+    buildTriggered,
+  });
+}
+
+if (action === "organize-entry") {
+  const noteRef = String(args.file || args.id || args.slug || args.title || args.target || "").trim();
+
+  if (!noteRef) {
+    printAndExit({ ok: false, error: "organize-entry action requires a note reference." }, 1);
+  }
+
+  const target = findTargetNote(noteRef);
+  if (!target) {
+    printAndExit({ ok: false, error: `Note not found: ${noteRef}` }, 1);
+  }
+
+  const config = JSON.parse(readText(docsConfigPath));
+  config.sections ||= [];
+  config.entries ||= [];
+
+  const nextSection = resolveSectionId(args.section || args.destination || "", config, target);
+  const sectionMeta = config.sections.find((item) => item.id === nextSection) || null;
+  const existingEntry = config.entries.find((item) => item.path === target.relativePath);
+  const nextEntry = {
+    ...(existingEntry || {}),
+    path: target.relativePath,
+    title: existingEntry?.title || target.title,
+    shortTitle: existingEntry?.shortTitle || "",
+    description: existingEntry?.description || target.summary || "",
+    section: nextSection,
+    order: Number.isFinite(existingEntry?.order) ? existingEntry.order : Date.now(),
+    featured: Boolean(existingEntry?.featured),
+    hidden: Boolean(existingEntry?.hidden),
+  };
+
+  if (existingEntry) {
+    Object.assign(existingEntry, nextEntry);
+  } else {
+    config.entries.push(nextEntry);
+  }
+
+  writeText(docsConfigPath, `${JSON.stringify(config, null, 2)}\n`);
+  const buildTriggered = shouldBuildFromArgs(args, true);
+
+  if (buildTriggered) {
+    runKbBuild();
+  }
+
+  printAndExit({
+    ok: true,
+    action,
+    path: target.relativePath,
+    title: target.title,
+    section: nextSection,
+    sectionTitle: sectionMeta?.title || nextSection,
     buildTriggered,
   });
 }
@@ -307,7 +530,18 @@ printAndExit(
   {
     ok: false,
     error: `Unsupported action: ${action}`,
-    supportedActions: ["retrieve", "add", "append", "update-meta", "delete", "inspect-url", "ingest-url", "build"],
+    supportedActions: [
+      "retrieve",
+      "add",
+      "append",
+      "append-from-url",
+      "organize-entry",
+      "update-meta",
+      "delete",
+      "inspect-url",
+      "ingest-url",
+      "build",
+    ],
   },
   1
 );
