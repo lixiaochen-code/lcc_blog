@@ -10,6 +10,7 @@ import {
   runKbBuild,
   parseArgs,
   shouldBuildFromArgs,
+  readProjectEnv,
 } from "./shared.mjs";
 
 const DEFAULT_UA =
@@ -34,16 +35,20 @@ function normalizeProxyUrl(value) {
 }
 
 function getProxyUrl() {
-  return normalizeProxyUrl(process.env.AI_URL_PROXY);
+  const env = readProjectEnv();
+  return normalizeProxyUrl(env.proxy_url || env.PROXY_URL || env.AI_URL_PROXY);
 }
 
 function getProxyEnv() {
+  const env = readProjectEnv();
   const proxyUrl = getProxyUrl();
   if (!proxyUrl) {
-    return process.env;
+    return env;
   }
   return {
-    ...process.env,
+    ...env,
+    proxy_url: proxyUrl,
+    PROXY_URL: proxyUrl,
     AI_URL_PROXY: proxyUrl,
     HTTP_PROXY: proxyUrl,
     HTTPS_PROXY: proxyUrl,
