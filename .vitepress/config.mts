@@ -2,11 +2,12 @@ import { defineConfig } from "vitepress";
 import { kbNav, kbSidebar } from "./generated/kb.mjs";
 
 export default defineConfig({
-  title: "小晨的学习笔记",
-  description: "一个可检索、可整理、可持续生长的个人知识库",
+  title: "LCC Knowledge Lab",
+  description: "重新构建的 Markdown-first 个人知识库与 AI 工作台",
   lang: "zh-CN",
   cleanUrls: true,
   ignoreDeadLinks: true,
+  head: [["meta", { name: "theme-color", content: "#d86c2a" }]],
   themeConfig: {
     nav: kbNav,
     sidebar: kbSidebar,

@@ -54,12 +54,10 @@ const processes = [];
 
 if (await isPortInUse(AI_DEV_PORT)) {
   const health = await getHealth(AI_DEV_PORT);
-  if (health?.storage === "sqlite") {
-    console.log(`[ai-dev-server] detected existing NestJS server on http://localhost:${AI_DEV_PORT}, reusing it.`);
+  if (health?.ok) {
+    console.log(`[ai-dev-server] detected existing API server on http://localhost:${AI_DEV_PORT}, reusing it.`);
   } else {
-    console.error(
-      `[ai-dev-server] port ${AI_DEV_PORT} is occupied by a non-NestJS or incompatible service. Please stop it and retry.`
-    );
+    console.error(`[ai-dev-server] port ${AI_DEV_PORT} is occupied by another service. Please stop it and retry.`);
     process.exit(1);
   }
 } else {

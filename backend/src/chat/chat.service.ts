@@ -1,9 +1,19 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
-import { ProxyAgent } from "undici";
+import { fetch as undiciFetch, ProxyAgent } from "undici";
 import { RuntimeService } from "../runtime/runtime.service";
 import { getProxyUrl } from "../common/proxy";
 
 const MODEL_TIMEOUT_MS = Number(process.env.AI_MODEL_TIMEOUT_MS || 30000);
+
+type ChatMessage = {
+  role: string;
+  content: string;
+};
+
+type StreamedChatChunk = {
+  model: string;
+  delta: string;
+};
 
 const actionPermissions: Record<string, string> = {
   retrieve: "notes.read",
@@ -38,7 +48,10 @@ export class ChatService {
 
   private extractSingleLineField(message: string, labels: string[]) {
     for (const label of labels) {
-      const pattern = new RegExp(`(?:^|[\\n，,；;。])\\s*(?:${label})\\s*[:：]\\s*([^\\n，,；;。]+)`, "im");
+      const pattern = new RegExp(
+        `(?:^|[\\n，,；;。])\\s*(?:${label})\\s*[:：]\\s*([^\\n，,；;。]+)`,
+        "im",
+      );
       const matched = String(message || "").match(pattern)?.[1];
       if (matched) {
         return matched.trim();
@@ -48,18 +61,27 @@ export class ChatService {
   }
 
   private extractBlockField(message: string, labels: string[]) {
-    const escapedLabels = labels.map((label) => label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+    const escapedLabels = labels.map((label) =>
+      label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+    );
     const joinedLabels = escapedLabels.join("|");
     const pattern = new RegExp(
       `(?:^|[\\n，,；;。])\\s*(?:${joinedLabels})\\s*[:：]\\s*([\\s\\S]*?)(?=(?:[\\n，,；;。])\\s*(?:标题|title|分类|category|标签|tags|摘要|summary|内容|正文|补充|追加内容|append|笔记|note|slug|文件|目标笔记|target)\\s*[:：]|$)`,
-      "i"
+      "i",
     );
     const matched = String(message || "").match(pattern)?.[1];
     return matched ? matched.trim() : "";
   }
 
   private extractNoteReference(message: string) {
-    const directRef = this.extractSingleLineField(message, ["笔记", "note", "slug", "文件", "目标笔记", "target"]);
+    const directRef = this.extractSingleLineField(message, [
+      "笔记",
+      "note",
+      "slug",
+      "文件",
+      "目标笔记",
+      "target",
+    ]);
     if (directRef) {
       return directRef;
     }
@@ -80,23 +102,36 @@ export class ChatService {
     }
 
     const lines = this.extractMeaningfulLines(message);
-    const ignored = new Set(["整理以下目录", "整理目录", "待整理", "归档", "归类"]);
+    const ignored = new Set([
+      "整理以下目录",
+      "整理目录",
+      "待整理",
+      "归档",
+      "归类",
+    ]);
     const candidate = [...lines].reverse().find((line) => !ignored.has(line));
     return String(candidate || "").trim();
   }
 
   private extractOrganizeDestination(message: string) {
     const explicit =
-      this.extractSingleLineField(message, ["目录", "栏目", "分组", "section", "目标目录", "目标栏目"]) ||
-      "";
+      this.extractSingleLineField(message, [
+        "目录",
+        "栏目",
+        "分组",
+        "section",
+        "目标目录",
+        "目标栏目",
+      ]) || "";
     if (explicit) {
       return explicit;
     }
 
     const text = String(message || "").trim();
     const matched =
-      text.match(/(?:归到|归入|移到|移动到|放到)\s*[《“"]?([^》”"\n]+)[》”"]?/)?.[1] ||
-      "";
+      text.match(
+        /(?:归到|归入|移到|移动到|放到)\s*[《“"]?([^》”"\n]+)[》”"]?/,
+      )?.[1] || "";
     return String(matched || "").trim();
   }
 
@@ -128,8 +163,18 @@ export class ChatService {
 
   private buildAppendArgs(message: string) {
     const noteRef = this.extractNoteReference(message);
-    const append = this.extractBlockField(message, ["补充", "追加内容", "append", "内容", "正文"]);
-    const section = this.extractSingleLineField(message, ["章节", "小节", "section"]);
+    const append = this.extractBlockField(message, [
+      "补充",
+      "追加内容",
+      "append",
+      "内容",
+      "正文",
+    ]);
+    const section = this.extractSingleLineField(message, [
+      "章节",
+      "小节",
+      "section",
+    ]);
     return {
       noteRef,
       append,
@@ -153,8 +198,14 @@ export class ChatService {
 
   private buildAppendFromUrlArgs(message: string, matchedUrl: string) {
     const noteRef = this.extractNoteReference(message);
-    const section = this.extractSingleLineField(message, ["章节", "小节", "section"]);
-    const contentMode = /全文|原文|完整内容|full/i.test(message) ? "full" : "summary";
+    const section = this.extractSingleLineField(message, [
+      "章节",
+      "小节",
+      "section",
+    ]);
+    const contentMode = /全文|原文|完整内容|full/i.test(message)
+      ? "full"
+      : "summary";
     return {
       url: matchedUrl,
       target: noteRef,
@@ -167,43 +218,19 @@ export class ChatService {
     const rawText = String(message || "").trim();
     const text = rawText.toLowerCase();
     if (!text) return null;
-
-    const matchedUrl = rawText.match(/https?:\/\/\S+/i)?.[0] || "";
-    const wantsProjectSummary = /这个项目|项目主要|项目是干什么|what.*project|about.*project/.test(text);
-    const wantsUrlInspect = /解析|分析|总结|概述|提炼|看看|介绍|摘要/.test(text);
-    const wantsIngest = /导入|收录|保存到知识库|加入知识库|写入知识库|纳入知识库|ingest/.test(text);
-    const wantsAppendToNote = /补充到|追加到|更新到|同步到/.test(text) && /https?:\/\/\S+/i.test(rawText);
-    const wantsOverview = /(当前|现在|目前)?知识库.*(哪些|什么|啥|内容|笔记|文章|资料|目录|分类)|查看知识库内容|知识库里有什么|有哪些内容|有什么内容|都有什么/.test(text);
-    const wantsAdd = /(新增|新建|创建|添加).*(笔记|知识|知识库|文章|文档)/.test(text);
-    const wantsAppend = /(补充|追加|完善|更新).*(笔记|文章|文档|知识库)/.test(text);
-    const wantsOrganizeEntry =
-      /(整理以下目录|整理目录|归档|归类|归位|从待整理|待整理)/.test(text) &&
-      !/(整理.*知识库|重建.*知识库|刷新.*知识库|重组.*目录)/.test(text);
-
-    if (matchedUrl && wantsAppendToNote) {
-      const args = this.buildAppendFromUrlArgs(rawText, matchedUrl);
-      if (String(args.target || "").trim()) {
-        return {
-          intent: "inspect external url and append the extracted content to an existing note",
-          action: "append-from-url",
-          args,
-          title: "引用链接更新笔记",
-          reply: "收到，我先解析这个链接，再把内容补充到指定笔记。",
-        };
-      }
-    }
-
-    if (matchedUrl && wantsIngest) {
-      return {
-        intent: "ingest external url into knowledge base",
-        action: "ingest-url",
-        args: this.buildUrlActionArgs(rawText, matchedUrl),
-        title: "导入网页到知识库",
-        reply: "收到，我先解析这个链接并写入知识库。",
-      };
-    }
-
-    if (matchedUrl && !wantsIngest && (wantsProjectSummary || wantsUrlInspect)) {
+    const matchedUrl = text.match(/https?:\/\/\S+/i)?.[0] || "";
+    const isGithubRepoUrl =
+      /^https?:\/\/github\.com\/[^/\s]+\/[^/\s?#]+\/?$/i.test(matchedUrl);
+    const wantsProjectSummary =
+      /这个项目|这个仓库|这个repo|这(是)?(个|一个)?什么(项目|仓库|repo)|项目主要|项目是干什么|仓库是干什么|repo是干什么|what.*(project|repo|repository)|about.*(project|repo|repository)|what does.*(repo|repository)/.test(
+        text,
+      );
+    const wantsIngest = /导入|收录|保存到知识库|ingest/.test(text);
+    if (
+      matchedUrl &&
+      !wantsIngest &&
+      (wantsProjectSummary || isGithubRepoUrl)
+    ) {
       return {
         intent: "inspect external url and summarize project purpose",
         action: "inspect-url",
@@ -251,7 +278,10 @@ export class ChatService {
 
     if (wantsAppend) {
       const args = this.buildAppendArgs(rawText);
-      if (String(args.noteRef || "").trim() && String(args.append || "").trim()) {
+      if (
+        String(args.noteRef || "").trim() &&
+        String(args.append || "").trim()
+      ) {
         return {
           intent: "append new content to an existing note",
           action: "append",
@@ -292,13 +322,20 @@ export class ChatService {
     return actionPermissions[action];
   }
 
-  normalizePlannedArgs(action: string, args: Record<string, unknown>, message: string) {
+  normalizePlannedArgs(
+    action: string,
+    args: Record<string, unknown>,
+    message: string,
+  ) {
     const nextArgs = typeof args === "object" && args ? { ...args } : {};
     const fallbackMessage = String(message || "").trim();
     if (action === "retrieve" && !String(nextArgs.query || "").trim()) {
       nextArgs.query = fallbackMessage;
     }
-    if ((action === "append" || action === "append-from-url") && !String(nextArgs.target || "").trim()) {
+    if (
+      (action === "append" || action === "append-from-url") &&
+      !String(nextArgs.target || "").trim()
+    ) {
       const noteRef = this.extractNoteReference(fallbackMessage);
       if (noteRef) {
         nextArgs.target = noteRef;
@@ -343,7 +380,10 @@ export class ChatService {
         nextArgs.section = inferredArgs.section;
       }
     }
-    if ((action === "inspect-url" || action === "ingest-url") && !String(nextArgs.url || "").trim()) {
+    if (
+      (action === "inspect-url" || action === "ingest-url") &&
+      !String(nextArgs.url || "").trim()
+    ) {
       const matchedUrl = fallbackMessage.match(/https?:\/\/\S+/i);
       if (matchedUrl) {
         nextArgs.url = matchedUrl[0];
@@ -367,9 +407,14 @@ export class ChatService {
   normalizeHistory(history: Array<{ role?: string; content?: string }>) {
     if (!Array.isArray(history)) return [];
     return history
-      .filter((entry) => entry && ["user", "assistant"].includes(String(entry.role)))
+      .filter(
+        (entry) => entry && ["user", "assistant"].includes(String(entry.role)),
+      )
       .slice(-8)
-      .map((entry) => ({ role: String(entry.role), content: String(entry.content || "").trim() }))
+      .map((entry) => ({
+        role: String(entry.role),
+        content: String(entry.content || "").trim(),
+      }))
       .filter((entry) => entry.content);
   }
 
@@ -390,55 +435,195 @@ export class ChatService {
     }
   }
 
-  async callChatModel(messages: Array<{ role: string; content: string }>) {
+  extractTextContent(content: unknown) {
+    if (typeof content === "string") {
+      return content;
+    }
+    if (!Array.isArray(content)) {
+      return "";
+    }
+    return content
+      .map((part) => {
+        if (typeof part === "string") {
+          return part;
+        }
+        if (
+          part &&
+          typeof part === "object" &&
+          typeof (part as { text?: unknown }).text === "string"
+        ) {
+          return String((part as { text?: unknown }).text);
+        }
+        return "";
+      })
+      .join("");
+  }
+
+  async requestChatCompletion(
+    messages: ChatMessage[],
+    options: { stream?: boolean } = {},
+  ) {
     const runtime = await this.runtimeService.getConfig();
-    const protocol = String(runtime?.server?.protocol || "https").trim() || "https";
-    const baseUrl = String(runtime?.server?.baseUrl || "").trim().replace(/\/+$/, "");
+    const protocol =
+      String(runtime?.server?.protocol || "https").trim() || "https";
+    const baseUrl = String(runtime?.server?.baseUrl || "")
+      .trim()
+      .replace(/\/+$/, "");
     const model = String(runtime?.model?.selected || "").trim();
     const apiKey = String(runtime?.credentials?.apiKey || "").trim();
     if (!baseUrl || !model || !apiKey) {
-      throw new BadRequestException("AI runtime is not ready. Please configure baseUrl, model, and apiKey first.");
+      throw new BadRequestException(
+        "AI runtime is not ready. Please configure baseUrl, model, and apiKey first.",
+      );
     }
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), MODEL_TIMEOUT_MS);
     let response: Response;
     try {
-      response = await fetch(`${protocol}://${baseUrl}/chat/completions`, {
+      const requestInit: any = {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Accept: options.stream ? "text/event-stream" : "application/json",
           Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
           model,
           temperature: 0.2,
           messages,
+          ...(options.stream ? { stream: true } : {}),
         }),
         signal: controller.signal,
         ...(proxyAgent ? { dispatcher: proxyAgent } : {}),
-      } as RequestInit & { dispatcher?: ProxyAgent });
+      };
+      response = await undiciFetch(
+        `${protocol}://${baseUrl}/chat/completions`,
+        requestInit,
+      );
     } catch (error: any) {
       if (error?.name === "AbortError") {
-        throw new BadRequestException(`Upstream model timeout after ${MODEL_TIMEOUT_MS}ms.`);
+        throw new BadRequestException(
+          `Upstream model timeout after ${MODEL_TIMEOUT_MS}ms.`,
+        );
       }
-      throw new BadRequestException(error?.message || "Upstream model request failed.");
+      const detail = [error?.message, error?.cause?.message, error?.cause?.code]
+        .filter(Boolean)
+        .join(" | ");
+      console.error("[chat] upstream fetch failed", error);
+      throw new BadRequestException(detail || "Upstream model request failed.");
     } finally {
       clearTimeout(timeout);
     }
 
-    const data: any = await response.json().catch(() => ({}));
     if (!response.ok) {
-      throw new BadRequestException(data?.error?.message || data?.message || "Upstream model request failed.");
+      const raw = await response.text().catch(() => "");
+      let message = "Upstream model request failed.";
+      if (raw) {
+        try {
+          const parsed = JSON.parse(raw);
+          message = parsed?.error?.message || parsed?.message || raw;
+        } catch {
+          message = raw;
+        }
+      }
+      throw new BadRequestException(message);
     }
+    return { model, response };
+  }
+
+  async callChatModel(messages: ChatMessage[]) {
+    const { model, response } = await this.requestChatCompletion(messages);
+    const data: any = await response.json().catch(() => ({}));
     const content = data?.choices?.[0]?.message?.content;
     if (!content) {
       throw new BadRequestException("Upstream model returned no content.");
     }
-    return { model, content: String(content) };
+    return { model, content: this.extractTextContent(content) };
   }
 
-  async planChatAction(input: { actor: { id: string; role: string }; message: string; history: Array<{ role: string; content: string }> }) {
+  async *streamChatModel(
+    messages: ChatMessage[],
+  ): AsyncGenerator<StreamedChatChunk> {
+    const { model, response } = await this.requestChatCompletion(messages, {
+      stream: true,
+    });
+    if (!response.body) {
+      throw new BadRequestException("Upstream model did not return a stream.");
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    const consumeEvent = (rawEvent: string) => {
+      const dataLines = rawEvent
+        .split(/\r?\n/)
+        .filter((line) => line.startsWith("data:"))
+        .map((line) => line.slice(5).trimStart());
+
+      if (dataLines.length === 0) {
+        return [] as StreamedChatChunk[];
+      }
+
+      const payloadText = dataLines.join("\n").trim();
+      if (!payloadText || payloadText === "[DONE]") {
+        return [] as StreamedChatChunk[];
+      }
+
+      let payload: any;
+      try {
+        payload = JSON.parse(payloadText);
+      } catch {
+        return [] as StreamedChatChunk[];
+      }
+
+      const chunkModel = String(payload?.model || model).trim() || model;
+      const delta =
+        this.extractTextContent(payload?.choices?.[0]?.delta?.content) ||
+        this.extractTextContent(payload?.choices?.[0]?.message?.content);
+
+      if (!delta) {
+        return [] as StreamedChatChunk[];
+      }
+
+      return [{ model: chunkModel, delta }];
+    };
+
+    while (true) {
+      const { done, value } = await reader.read();
+      buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
+
+      while (true) {
+        const separator = buffer.match(/\r?\n\r?\n/);
+        if (separator?.index === undefined) {
+          break;
+        }
+
+        const rawEvent = buffer.slice(0, separator.index);
+        buffer = buffer.slice(separator.index + separator[0].length);
+
+        for (const chunk of consumeEvent(rawEvent)) {
+          yield chunk;
+        }
+      }
+
+      if (done) {
+        if (buffer.trim()) {
+          for (const chunk of consumeEvent(buffer)) {
+            yield chunk;
+          }
+        }
+        break;
+      }
+    }
+  }
+
+  async planChatAction(input: {
+    actor: { id: string; role: string };
+    message: string;
+    history: Array<{ role: string; content: string }>;
+  }) {
     const plannerMessages = [
       {
         role: "system",
@@ -476,7 +661,11 @@ export class ChatService {
       plan: {
         intent: String(plan.intent || "").trim(),
         action: String(plan.action || "none").trim(),
-        args: this.normalizePlannedArgs(String(plan.action || "none").trim(), plan.args, input.message),
+        args: this.normalizePlannedArgs(
+          String(plan.action || "none").trim(),
+          plan.args,
+          input.message,
+        ),
         title: String(plan.title || "AI 计划").trim() || "AI 计划",
         reply: String(plan.reply || "").trim(),
       },
@@ -489,7 +678,30 @@ export class ChatService {
     plan: { action: string; args: Record<string, unknown> };
     execution: unknown;
   }) {
-    const summaryMessages = [
+    const summaryMessages = this.buildSummaryMessages(input);
+    const result = await this.callChatModel(summaryMessages);
+    return { model: result.model, content: result.content.trim() };
+  }
+
+  async *summarizeActionResultStream(input: {
+    actor: { id: string; role: string };
+    message: string;
+    plan: { action: string; args: Record<string, unknown> };
+    execution: unknown;
+  }) {
+    const summaryMessages = this.buildSummaryMessages(input);
+    for await (const chunk of this.streamChatModel(summaryMessages)) {
+      yield chunk;
+    }
+  }
+
+  buildSummaryMessages(input: {
+    actor: { id: string; role: string };
+    message: string;
+    plan: { action: string; args: Record<string, unknown> };
+    execution: unknown;
+  }) {
+    return [
       {
         role: "system",
         content: [
@@ -511,82 +723,5 @@ export class ChatService {
         ].join("\n\n"),
       },
     ];
-    const result = await this.callChatModel(summaryMessages);
-    return { model: result.model, content: result.content.trim() };
-  }
-
-  summarizeActionResultLocally(input: {
-    message: string;
-    plan: { action: string; args: Record<string, unknown> };
-    execution: any;
-  }) {
-    const action = String(input.plan.action || "").trim();
-    const execution = input.execution || {};
-
-    if (action === "retrieve") {
-      if (execution.mode === "overview" && execution.overview) {
-        const categories = Array.isArray(execution.overview.categories) ? execution.overview.categories.slice(0, 5) : [];
-        const latestNotes = Array.isArray(execution.results) ? execution.results.slice(0, 5) : [];
-        const categoryText = categories.length
-          ? categories.map((item: any) => `${item.category}（${item.count}）`).join("、")
-          : "暂无分类信息";
-        const latestText = latestNotes.length
-          ? latestNotes.map((item: any) => `《${item.title}》`).join("、")
-          : "暂无最近更新内容";
-        return `当前知识库共有 ${execution.overview.totalNotes || 0} 篇笔记，分类主要有：${categoryText}。最近更新包括：${latestText}。如果你要看某一类或某个主题，我可以继续细查。`;
-      }
-
-      const results = Array.isArray(execution.results) ? execution.results : [];
-      if (results.length === 0) {
-        return "这次检索没有命中相关笔记。你可以换一个更具体的主题词，或者直接让我先列出当前知识库概览。";
-      }
-      const summary = results
-        .slice(0, 4)
-        .map((item: any) => `《${item.title}》`)
-        .join("、");
-      return `检索到 ${results.length} 条相关笔记，优先相关的是：${summary}。如果你需要，我可以继续基于其中某一篇展开。`;
-    }
-
-    if (action === "add") {
-      return `已新增笔记《${execution.title || input.plan.args?.title || "未命名"}》，路径是 ${execution.path}。如果你要我继续补充内容或整理标签，可以直接接着说。`;
-    }
-
-    if (action === "append") {
-      return `已把新内容补充到 ${execution.path}。如果还要继续追加，或者想顺手重建知识库索引，也可以继续执行。`;
-    }
-
-    if (action === "append-from-url") {
-      return `已解析链接并把内容补充到 ${execution.path}，新增小节是“${execution.section}”。如果你想改成只保留摘要或改写成你的表达风格，可以继续细化。`;
-    }
-
-    if (action === "organize-entry") {
-      return `已把《${execution.title || "该笔记"}》整理到“${execution.sectionTitle || execution.section}”。${execution.buildTriggered ? "目录和索引也已经同步重建。" : ""}`;
-    }
-
-    if (action === "inspect-url") {
-      const article = execution.article || {};
-      const title = article.title || article.siteName || execution.url || "该链接";
-      const summary = article.description || article.excerpt || "已完成正文提取";
-      return `已解析链接《${title}》。${summary}`;
-    }
-
-    if (action === "ingest-url") {
-      return `已把链接内容写入知识库，生成笔记《${execution.title}》，路径是 ${execution.path}。如果还要把它合并到现有笔记，我也可以继续处理。`;
-    }
-
-    if (action === "build") {
-      return "知识库索引和导航已重建完成。";
-    }
-
-    if (action === "update-meta") {
-      const fields = Array.isArray(execution.updatedFields) ? execution.updatedFields.join("、") : "元数据";
-      return `已更新 ${execution.path} 的 ${fields}。`;
-    }
-
-    if (action === "delete") {
-      return `已删除 ${execution.path || "指定笔记"}。`;
-    }
-
-    return `已执行 ${action}。`;
   }
 }

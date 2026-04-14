@@ -29,15 +29,19 @@ type AccessUser = {
 };
 
 type ChatEntry = {
+  id: string;
   role: "user" | "assistant";
   title: string;
   body: string;
   meta?: string;
+  streaming?: boolean;
 };
 
 const apiBase = "http://localhost:3030/api";
 const storageKey = "ai-console-token";
-const requestTimeoutMs = 35000;
+const requestTimeoutMs = 90000;
+const streamRequestTimeoutMs = 10 * 60 * 1000;
+const streamFirstEventTimeoutMs = 8000;
 const availablePermissions = [
   "notes.read",
   "notes.create",
@@ -71,6 +75,7 @@ const chatInput = ref("");
 const chatStreamRef = ref<HTMLElement | null>(null);
 const chatEntries = ref<ChatEntry[]>([
   {
+    id: "chat-entry-welcome",
     role: "assistant",
     title: "AI 助手",
     body: "登录后就可以直接用自然语言驱动知识库。你说需求，我来判断动作并在服务端完成权限校验。",
@@ -154,6 +159,7 @@ function applyDockWidth() {
 
 let dragFrame = 0;
 let pendingWidth = 0;
+let chatEntrySeq = 0;
 
 function flushDockWidth() {
   dragFrame = 0;
@@ -200,8 +206,34 @@ function pushLog(message: string) {
   logs.value = [`${new Date().toLocaleTimeString()}  ${message}`, ...logs.value].slice(0, 12);
 }
 
-function pushChat(role: "user" | "assistant", title: string, body: string, meta = "") {
-  chatEntries.value = [...chatEntries.value, { role, title, body, meta }].slice(-20);
+function nextChatEntryId() {
+  chatEntrySeq += 1;
+  return `chat-entry-${Date.now()}-${chatEntrySeq}`;
+}
+
+function pushChat(role: "user" | "assistant", title: string, body: string, meta = "", streaming = false) {
+  const entry: ChatEntry = {
+    id: nextChatEntryId(),
+    role,
+    title,
+    body,
+    meta,
+    streaming,
+  };
+  chatEntries.value = [...chatEntries.value, entry].slice(-20);
+  return entry.id;
+}
+
+function updateChatEntry(id: string, patch: Partial<ChatEntry> | ((entry: ChatEntry) => ChatEntry)) {
+  chatEntries.value = chatEntries.value.map((entry) => {
+    if (entry.id !== id) {
+      return entry;
+    }
+    if (typeof patch === "function") {
+      return patch(entry);
+    }
+    return { ...entry, ...patch };
+  });
 }
 
 function scrollChatToBottom(behavior: ScrollBehavior = "auto") {
@@ -303,17 +335,168 @@ async function request(path: string, options: RequestInit = {}, requireAuth = tr
   } finally {
     window.clearTimeout(timeout);
   }
-  const data = await response.json();
+  const data = await response.json().catch(() => ({}));
   if (!response.ok || data.ok === false) {
-    const message = data.error || data.stderr || "Request failed.";
-    if (message === "Session expired or invalid.") {
-      saveToken("");
-      currentUser.value = null;
-      statusText.value = "登录已失效，请重新登录";
-    }
+    const message = resolveApiErrorMessage(data);
+    handleApiAuthError(message);
     throw new Error(message);
   }
   return data;
+}
+
+function resolveApiErrorMessage(payload: any) {
+  return (
+    payload?.assistantMessage ||
+    payload?.result?.error ||
+    payload?.error ||
+    payload?.stderr ||
+    "Request failed."
+  );
+}
+
+function handleApiAuthError(message: string) {
+  if (message === "Session expired or invalid.") {
+    saveToken("");
+    currentUser.value = null;
+    statusText.value = "登录已失效，请重新登录";
+  }
+}
+
+function parseSseEvent(rawEvent: string) {
+  let event = "message";
+  const dataLines: string[] = [];
+
+  for (const line of rawEvent.split(/\r?\n/)) {
+    if (!line || line.startsWith(":")) {
+      continue;
+    }
+    if (line.startsWith("event:")) {
+      event = line.slice(6).trim() || "message";
+      continue;
+    }
+    if (line.startsWith("data:")) {
+      dataLines.push(line.slice(5).trimStart());
+    }
+  }
+
+  if (dataLines.length === 0) {
+    return null;
+  }
+
+  const raw = dataLines.join("\n");
+  try {
+    return { event, data: JSON.parse(raw) };
+  } catch {
+    return { event, data: { raw } };
+  }
+}
+
+async function resolveStreamError(response: Response) {
+  const contentType = response.headers.get("content-type") || "";
+  if (contentType.includes("application/json")) {
+    const payload = await response.json().catch(() => ({}));
+    return resolveApiErrorMessage(payload);
+  }
+  const text = await response.text().catch(() => "");
+  return text || "Request failed.";
+}
+
+async function streamRequest(path: string, payload: Record<string, unknown>, onEvent: (event: string, data: any) => void) {
+  const headers = new Headers({
+    "Content-Type": "application/json",
+    Accept: "text/event-stream",
+  });
+  if (authToken.value) {
+    headers.set("Authorization", `Bearer ${authToken.value}`);
+  }
+
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), streamRequestTimeoutMs);
+  let firstEventTimeout = 0;
+  let firstEventReceived = false;
+
+  try {
+    const response = await fetch(`${apiBase}${path}`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      const message = await resolveStreamError(response);
+      handleApiAuthError(message);
+      throw new Error(message);
+    }
+
+    if (!response.body) {
+      throw new Error("当前环境不支持流式响应。");
+    }
+
+    firstEventTimeout = window.setTimeout(() => {
+      if (firstEventReceived) {
+        return;
+      }
+      controller.abort("stream-first-event-timeout");
+    }, streamFirstEventTimeoutMs);
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
+
+      while (true) {
+        const separator = buffer.match(/\r?\n\r?\n/);
+        if (separator?.index === undefined) {
+          break;
+        }
+
+        const rawEvent = buffer.slice(0, separator.index);
+        buffer = buffer.slice(separator.index + separator[0].length);
+
+        const parsed = parseSseEvent(rawEvent);
+        if (parsed) {
+          firstEventReceived = true;
+          if (firstEventTimeout) {
+            window.clearTimeout(firstEventTimeout);
+            firstEventTimeout = 0;
+          }
+          onEvent(parsed.event, parsed.data);
+        }
+      }
+
+      if (done) {
+        if (buffer.trim()) {
+          const parsed = parseSseEvent(buffer);
+          if (parsed) {
+            firstEventReceived = true;
+            if (firstEventTimeout) {
+              window.clearTimeout(firstEventTimeout);
+              firstEventTimeout = 0;
+            }
+            onEvent(parsed.event, parsed.data);
+          }
+        }
+        break;
+      }
+    }
+  } catch (error: any) {
+    if (error?.name === "AbortError") {
+      if (!firstEventReceived) {
+        throw new Error(`流式接口在 ${Math.floor(streamFirstEventTimeoutMs / 1000)}s 内没有返回任何事件，请检查后端是否已重启到新版本`);
+      }
+      throw new Error(`流式请求超时（>${Math.floor(streamRequestTimeoutMs / 1000)}s）`);
+    }
+    throw error;
+  } finally {
+    window.clearTimeout(timeout);
+    if (firstEventTimeout) {
+      window.clearTimeout(firstEventTimeout);
+    }
+  }
 }
 
 async function loadHealth() {
@@ -541,33 +724,152 @@ async function sendChat() {
   pushChat("user", currentUser.value?.name || currentUser.value?.id || "当前用户", message, "自然语言请求");
   chatInput.value = "";
   busy.value = true;
+  const assistantEntryId = pushChat("assistant", "AI 助手", "已发送请求，正在连接流式响应…", "建立连接中", true);
+  let finalData: any = null;
+  let streamedMessageStarted = false;
 
   try {
-    const data = await request("/chat", {
-      method: "POST",
-      body: JSON.stringify({
+    let lastPhase = "";
+
+    await streamRequest(
+      "/chat/stream",
+      {
         message,
         history,
-      }),
-    });
+      },
+      (event, data) => {
+        if (event === "status") {
+          const phase = String(data?.phase || "").trim();
+          const text = String(data?.text || "").trim();
 
-    const metaParts = [
-      data.plan?.action ? `动作：${data.plan.action}` : "",
-      data.allowed === false ? "权限拒绝" : data.executed ? "已执行" : "未执行",
-      data.respondedBy || data.plannedBy || "",
-    ].filter(Boolean);
+          if (phase && phase !== lastPhase) {
+            pushLog(`AI 阶段：${text || phase}`);
+            lastPhase = phase;
+          }
 
-    pushChat(
-      "assistant",
-      data.plan?.title || "AI 助手",
-      data.assistantMessage || "已处理你的请求。",
-      metaParts.join(" · ")
+          updateChatEntry(assistantEntryId, (entry) => ({
+            ...entry,
+            meta: text || entry.meta || "处理中",
+            body: streamedMessageStarted ? entry.body : text || entry.body,
+          }));
+          return;
+        }
+
+        if (event === "plan") {
+          const metaParts = [
+            data?.plan?.action ? `动作：${data.plan.action}` : "",
+            data?.plannedBy || "",
+          ].filter(Boolean);
+
+          updateChatEntry(assistantEntryId, (entry) => ({
+            ...entry,
+            title: data?.plan?.title || entry.title,
+            meta: metaParts.join(" · ") || entry.meta,
+            body: streamedMessageStarted ? entry.body : data?.plan?.reply || entry.body,
+          }));
+          return;
+        }
+
+        if (event === "message") {
+          const delta = String(data?.delta || "");
+          if (!delta) {
+            return;
+          }
+
+          const isFirstDelta = !streamedMessageStarted;
+          streamedMessageStarted = true;
+          updateChatEntry(assistantEntryId, (entry) => ({
+            ...entry,
+            body: isFirstDelta ? delta : `${entry.body}${delta}`,
+          }));
+          return;
+        }
+
+        if (event === "done") {
+          finalData = data;
+          const metaParts = [
+            data?.plan?.action ? `动作：${data.plan.action}` : "",
+            data?.allowed === false ? "权限拒绝" : data?.executed ? "已执行" : "未执行",
+            data?.respondedBy || data?.plannedBy || "",
+          ].filter(Boolean);
+
+          updateChatEntry(assistantEntryId, (entry) => ({
+            ...entry,
+            title: data?.plan?.title || entry.title,
+            body: streamedMessageStarted ? entry.body : data?.assistantMessage || entry.body,
+            meta: metaParts.join(" · ") || entry.meta,
+            streaming: false,
+          }));
+          return;
+        }
+
+        if (event === "error") {
+          throw new Error(String(data?.message || "Request failed."));
+        }
+      }
     );
-    pushLog(`AI 对话完成：${data.plan?.action || "none"}`);
+
+    pushLog(`AI 对话完成：${finalData?.plan?.action || "none"}`);
     await loadState();
   } catch (error: any) {
-    pushChat("assistant", "执行失败", error.message || "未知错误", "请求失败");
-    pushLog(`AI 对话失败：${error.message}`);
+    const messageText = String(error?.message || "未知错误");
+    const shouldFallbackToLegacyChat =
+      !streamedMessageStarted &&
+      /Cannot POST \/api\/chat\/stream|404|Not Found|流式接口在 \d+s 内没有返回任何事件/i.test(messageText);
+
+    if (shouldFallbackToLegacyChat) {
+      try {
+        updateChatEntry(assistantEntryId, {
+          title: "AI 助手",
+          body: "当前后端还没有流式接口，正在自动回退到普通聊天接口…",
+          meta: "兼容模式",
+          streaming: true,
+        });
+        pushLog("流式接口不可用，已自动回退到普通聊天接口");
+
+        const data = await request("/chat", {
+          method: "POST",
+          body: JSON.stringify({
+            message,
+            history,
+          }),
+        });
+
+        const metaParts = [
+          data.plan?.action ? `动作：${data.plan.action}` : "",
+          data.allowed === false ? "权限拒绝" : data.executed ? "已执行" : "未执行",
+          data.respondedBy || data.plannedBy || "",
+        ].filter(Boolean);
+
+        updateChatEntry(assistantEntryId, {
+          title: data.plan?.title || "AI 助手",
+          body: data.assistantMessage || "已处理你的请求。",
+          meta: `${metaParts.join(" · ")}${metaParts.length ? " · " : ""}兼容模式`,
+          streaming: false,
+        });
+        pushLog(`AI 对话完成（兼容模式）：${data.plan?.action || "none"}`);
+        await loadState();
+        return;
+      } catch (fallbackError: any) {
+        updateChatEntry(assistantEntryId, {
+          title: "执行失败",
+          body: fallbackError.message || messageText,
+          meta: "请求失败",
+          streaming: false,
+        });
+        pushLog(`AI 对话失败：${fallbackError.message || messageText}`);
+        return;
+      }
+    }
+
+    updateChatEntry(assistantEntryId, (entry) => ({
+      ...entry,
+      title: streamedMessageStarted ? entry.title : "执行失败",
+      body: streamedMessageStarted ? entry.body : messageText,
+      meta: streamedMessageStarted ? `${entry.meta ? `${entry.meta} · ` : ""}请求失败` : "请求失败",
+      streaming: false,
+    }));
+    pushLog(`AI 对话失败：${messageText}`);
   } finally {
     busy.value = false;
   }
@@ -695,7 +997,10 @@ onBeforeUnmount(() => {
 });
 
 watch(
-  () => chatEntries.value.length,
+  () => {
+    const lastEntry = chatEntries.value[chatEntries.value.length - 1];
+    return `${chatEntries.value.length}:${lastEntry?.id || ""}:${lastEntry?.body || ""}:${lastEntry?.meta || ""}`;
+  },
   async () => {
     await nextTick();
     scrollChatToBottom("smooth");
@@ -823,7 +1128,7 @@ watch(
                 <div ref="chatStreamRef" class="chat-stream">
                   <div
                     v-for="entry in chatEntries"
-                    :key="entry.title + entry.body + entry.meta"
+                    :key="entry.id"
                     class="chat-row"
                     :class="entry.role"
                   >

@@ -1,59 +1,234 @@
 {
-  "generatedAt": "2026-04-13T08:27:56.079Z",
-  "totalNotes": 13,
+  "generatedAt": "2026-04-13T17:17:17.116Z",
+  "site": {
+    "title": "小晨的学习知识库",
+    "description": "一个重新设计的 Markdown-first 个人知识系统。"
+  },
+  "stats": {
+    "totalNotes": 13,
+    "totalSections": 6,
+    "totalTags": 31,
+    "totalReadingMinutes": 46
+  },
+  "sections": [
+    {
+      "id": "start",
+      "title": "开始使用",
+      "description": "入门说明、工作流记录和快速上手内容。",
+      "count": 3
+    },
+    {
+      "id": "design",
+      "title": "知识库设计",
+      "description": "知识库架构、权限和系统设计相关笔记。",
+      "count": 4
+    },
+    {
+      "id": "retrieval",
+      "title": "检索与回答",
+      "description": "检索策略、上下文压缩和回答约束。",
+      "count": 1
+    },
+    {
+      "id": "frontend",
+      "title": "前端工程化",
+      "description": "前端技术、构建工具和工程实践。",
+      "count": 1
+    },
+    {
+      "id": "tools",
+      "title": "开发工具",
+      "description": "外部工具、工作台和基础设施整理。",
+      "count": 3
+    },
+    {
+      "id": "web-clips",
+      "title": "网页摘录",
+      "description": "从外部网页抓取、整理和归档的内容。",
+      "count": 1
+    }
+  ],
+  "tags": [
+    {
+      "name": "部署",
+      "count": 1
+    },
+    {
+      "name": "代理服务",
+      "count": 1
+    },
+    {
+      "name": "低token",
+      "count": 1
+    },
+    {
+      "name": "对话",
+      "count": 1
+    },
+    {
+      "name": "发布",
+      "count": 1
+    },
+    {
+      "name": "工作流",
+      "count": 3
+    },
+    {
+      "name": "构建工具",
+      "count": 1
+    },
+    {
+      "name": "检索",
+      "count": 2
+    },
+    {
+      "name": "开发资源",
+      "count": 1
+    },
+    {
+      "name": "控制台",
+      "count": 1
+    },
+    {
+      "name": "配置",
+      "count": 1
+    },
+    {
+      "name": "前端",
+      "count": 1
+    },
+    {
+      "name": "前端工程化",
+      "count": 1
+    },
+    {
+      "name": "权限",
+      "count": 3
+    },
+    {
+      "name": "微信",
+      "count": 1
+    },
+    {
+      "name": "项目概览",
+      "count": 1
+    },
+    {
+      "name": "用户",
+      "count": 1
+    },
+    {
+      "name": "知识库",
+      "count": 7
+    },
+    {
+      "name": "AI",
+      "count": 7
+    },
+    {
+      "name": "AI 工具",
+      "count": 1
+    },
+    {
+      "name": "api",
+      "count": 1
+    },
+    {
+      "name": "awesome-list",
+      "count": 1
+    },
+    {
+      "name": "Claude",
+      "count": 1
+    },
+    {
+      "name": "Codex",
+      "count": 2
+    },
+    {
+      "name": "Dev",
+      "count": 1
+    },
+    {
+      "name": "Gemini",
+      "count": 1
+    },
+    {
+      "name": "github",
+      "count": 1
+    },
+    {
+      "name": "Markdown",
+      "count": 1
+    },
+    {
+      "name": "OpenAI 兼容",
+      "count": 1
+    },
+    {
+      "name": "OpenCode",
+      "count": 1
+    },
+    {
+      "name": "Vite",
+      "count": 1
+    }
+  ],
   "notes": [
     {
-      "id": "notes/architecture/对话式知识库接入设想",
+      "id": "architecture-对话式知识库接入设想",
+      "slug": "对话式知识库接入设想",
       "title": "对话式知识库接入设想",
       "summary": "记录如何把用户对话收束成稳定的知识库动作，以便在 Codex 或 OpenCode 中完成新增、追加与检索。",
-      "tags": [
-        "知识库",
-        "对话",
-        "AI"
-      ],
+      "tags": ["知识库", "对话", "AI"],
       "aliases": [],
-      "headings": [
-        "接入建议"
-      ],
-      "url": "/notes/architecture/对话式知识库接入设想",
-      "relativePath": "notes/architecture/对话式知识库接入设想.md",
       "category": "architecture",
+      "folder": "architecture",
+      "sectionId": "design",
+      "sectionTitle": "知识库设计",
       "createdAt": "2026-04-08T02:13:46.497Z",
       "updatedAt": "2026-04-08T02:13:46.534Z",
-      "contentPreview": "对话式知识库接入设想\n目标是把自然语言请求收束成 add、append、update-meta、search、context 等动作，并保持 Markdown 为唯一真源。\n接入建议\n优先让对话层负责意图识别，再把结构化参数交给本地脚本执行，这样更容易控制 token 和修改边界。",
+      "relativePath": "notes/architecture/对话式知识库接入设想.md",
+      "url": "/notes/architecture/对话式知识库接入设想",
+      "headings": ["对话式知识库接入设想", "接入建议"],
+      "excerpt": "对话式知识库接入设想 目标是把自然语言请求收束成 add、append、update meta、search、context 等动作，并保持 Markdown 为唯一真源。 接入建议 优先让对话层负责意图识别，再把结构化参数交给本地脚本执行，这样更容易控制 token 和修改边界。",
+      "plainText": "对话式知识库接入设想 目标是把自然语言请求收束成 add、append、update meta、search、context 等动作，并保持 Markdown 为唯一真源。 接入建议 优先让对话层负责意图识别，再把结构化参数交给本地脚本执行，这样更容易控制 token 和修改边界。",
+      "readingTime": 1,
       "related": [
         {
-          "id": "notes/architecture/服务器直部署与运行时配置",
-          "title": "服务器直部署与运行时配置",
-          "url": "/notes/architecture/服务器直部署与运行时配置"
+          "id": "architecture-owner授权与用户访问控制",
+          "title": "Owner 授权与用户访问控制",
+          "url": "/notes/architecture/owner授权与用户访问控制"
         },
         {
-          "id": "notes/architecture/生产AI权限与发布控制设计",
+          "id": "architecture-生产ai权限与发布控制设计",
           "title": "生产 AI 权限与发布控制设计",
           "url": "/notes/architecture/生产AI权限与发布控制设计"
         },
         {
-          "id": "notes/architecture/owner授权与用户访问控制",
-          "title": "Owner 授权与用户访问控制",
-          "url": "/notes/architecture/owner授权与用户访问控制"
+          "id": "inbox-project-overview",
+          "title": "项目总览",
+          "url": "/notes/inbox/project-overview"
         }
       ]
     },
     {
-      "id": "notes/architecture/服务器直部署与运行时配置",
+      "id": "architecture-服务器直部署与运行时配置",
+      "slug": "服务器直部署与运行时配置",
       "title": "服务器直部署与运行时配置",
       "summary": "定义生产 AI 工具如何直接在服务器运行，以及 owner 如何管理 baseUrl、protocol、apiKey 和单一模型。",
-      "tags": [
-        "知识库",
-        "AI",
-        "部署",
-        "配置"
-      ],
-      "aliases": [
-        "runtime config",
-        "server direct deploy"
-      ],
+      "tags": ["知识库", "AI", "部署", "配置"],
+      "aliases": ["runtime config", "server direct deploy"],
+      "category": "architecture",
+      "folder": "architecture",
+      "sectionId": "design",
+      "sectionTitle": "知识库设计",
+      "createdAt": "2026-04-08T00:00:00.000Z",
+      "updatedAt": "2026-04-08T00:00:00.000Z",
+      "relativePath": "notes/architecture/服务器直部署与运行时配置.md",
+      "url": "/notes/architecture/服务器直部署与运行时配置",
       "headings": [
+        "服务器直部署与运行时配置",
         "部署原则",
         "推荐部署形态",
         "1. 静态站点",
@@ -64,49 +239,46 @@
         "配置命令",
         "运行时配置建议结构",
         "安全建议",
-        "与权限系统的关系",
-        "当前落地建议"
+        "与权限系统的关系"
       ],
-      "url": "/notes/architecture/服务器直部署与运行时配置",
-      "relativePath": "notes/architecture/服务器直部署与运行时配置.md",
-      "category": "architecture",
-      "createdAt": "2026-04-08T00:00:00.000Z",
-      "updatedAt": "2026-04-08T00:00:00.000Z",
-      "contentPreview": "服务器直部署与运行时配置\n当前方案默认不依赖 Docker，而是直接在服务器上运行 Node 进程和现有知识库脚本。\n部署原则\n保持仓库结构简单，不引入 Docker 作为前置依赖。\n生产站点仍然可以是静态站点。\nAI 相关能力通过服务器进程提供，而不是塞进静态页面本身。\n知识库源码、运行时配置、发布动作保持分层。\n推荐部署形态\n建议拆成两个部分：\n静态站点\n由   产出  \n可部署到 Nginx、Caddy 或任意静态文件服务\nAI 服务进程\n直接运行在服务器上\n负责用户鉴权、权限校验、Token 配额控制\n负责调用 MCP、skills、 \n负责生成",
+      "excerpt": "服务器直部署与运行时配置 当前方案默认不依赖 Docker，而是直接在服务器上运行 Node 进程和现有知识库脚本。 部署原则 保持仓库结构简单，不引入 Docker 作为前置依赖。 生产站点仍然可以是静态站点。 AI 相关能力通过服务器进程提供，而不是塞进静态页面本身。 知识库源码、运行时配置、发布动作保持分层。 推荐部署形态 建议拆成两个部分： 1.…",
+      "plainText": "服务器直部署与运行时配置 当前方案默认不依赖 Docker，而是直接在服务器上运行 Node 进程和现有知识库脚本。 部署原则 保持仓库结构简单，不引入 Docker 作为前置依赖。 生产站点仍然可以是静态站点。 AI 相关能力通过服务器进程提供，而不是塞进静态页面本身。 知识库源码、运行时配置、发布动作保持分层。 推荐部署形态 建议拆成两个部分： 1. 静态站点 由 pnpm docs:build 产出 .vitepress/dist 可部署到 Nginx、Caddy 或任意静态文件服务 2. AI 服务进程 直接运行在服务器上 负责用户鉴权、权限校验、Token 配额控制 负责调用 MCP、skills、kb:agent 负责生成待发布请求 这意味着： 浏览站点本身不需要 Node 常驻进程 只有 AI 工具和管理后台需要服务器进程支持 为什么不强依赖 Docker 当前项目规模不大，且已经具备稳定的本地脚本体系： scripts/kb/agent.mjs scripts/kb/url.mjs scripts/kb/build.mjs 对于这类场景，直接部署有几个现实优势： 上手快 维护成本低 配置更直观 更适合单人 owner 控制 后续如果用户量明显上升，再考虑引入容器化即可。 运行时配置文件 建议分成两个文件： data/ai runtime.example.json：可提交到仓库的模板 data/ai runtime.local.json：服务器本地私有配置，不提交仓库 当前已经约定： data/ai runtime.local.json 已加入 .gitignore 实际密钥仅保存在服务器本地文件中 owner 可管理的运行时字段 最高权限用户可以修改： protocol baseUrl apiKey model 其中模型必须遵守一个约束： 系统同一时刻只有一个生效模型 非 owner 用户不能切换模型 普通用户只能使用 owner 已选定的模型 配置命令 当前仓库提供了一个轻量命令入口： pnpm kb:runtime config action inspect pnpm kb:runtime config action set protocol https baseUrl api.openai.com/v1 model gpt 4.1 mini 如果要设置密钥，可以额外传入： pnpm kb:runtime config action set apiKey \"<your key \" 该命令的职责是： 读取当前运行时配置 更新服务器协议和上游地址 更新唯一生效模型 更新本地保存的 API Key 运行时配置建议结构 建议配置至少包含： server.protocol server.baseUrl model.selected credentials.apiKey permissions.ownerCanManageConnection permissions.ownerCanManageModel 这样后续无论是后台页面还是 API，都可以围绕这一份配置工作。 安全建议 apiKey 只保存到服务器本地文件或受保护的环境变量。 前端页面不要直接暴露完整 key。 配置查询接口默认返回脱敏后的 key。 修改 baseUrl、protocol、apiKey、model 必须只允许 owner 执行。 与权限系统的关系 运行时配置属于系统级能力，不属于普通知识库编辑权限。 因此建议把这类权限单独建模，例如： runtime.manage connection runtime.manage model runtime.manage secret 默认只赋予 owner。 当前落地建议 接下来做应用层时，优先级建议如下： 1. 增加用户与权限表 2. 增加运行时配置读写接口 3. 增加 owner 管理页面 4. 增加 AI 动作网关 5. 最后再接入前端聊天窗口",
+      "readingTime": 5,
       "related": [
         {
-          "id": "notes/architecture/对话式知识库接入设想",
-          "title": "对话式知识库接入设想",
-          "url": "/notes/architecture/对话式知识库接入设想"
+          "id": "architecture-owner授权与用户访问控制",
+          "title": "Owner 授权与用户访问控制",
+          "url": "/notes/architecture/owner授权与用户访问控制"
         },
         {
-          "id": "notes/architecture/生产AI权限与发布控制设计",
+          "id": "architecture-生产ai权限与发布控制设计",
           "title": "生产 AI 权限与发布控制设计",
           "url": "/notes/architecture/生产AI权限与发布控制设计"
         },
         {
-          "id": "notes/architecture/owner授权与用户访问控制",
-          "title": "Owner 授权与用户访问控制",
-          "url": "/notes/architecture/owner授权与用户访问控制"
+          "id": "architecture-对话式知识库接入设想",
+          "title": "对话式知识库接入设想",
+          "url": "/notes/architecture/对话式知识库接入设想"
         }
       ]
     },
     {
-      "id": "notes/architecture/生产AI权限与发布控制设计",
+      "id": "architecture-生产ai权限与发布控制设计",
+      "slug": "生产AI权限与发布控制设计",
       "title": "生产 AI 权限与发布控制设计",
       "summary": "规划生产站点中的 AI 工具如何受控地修改开发环境知识库，并由 owner 决定是否重建和发布生产。",
-      "tags": [
-        "知识库",
-        "AI",
-        "权限",
-        "发布",
-        "工作流"
-      ],
-      "aliases": [
-        "production ai auth",
-        "权限设计"
-      ],
+      "tags": ["知识库", "AI", "权限", "发布", "工作流"],
+      "aliases": ["production ai auth", "权限设计"],
+      "category": "architecture",
+      "folder": "architecture",
+      "sectionId": "design",
+      "sectionTitle": "知识库设计",
+      "createdAt": "2026-04-08T00:00:00.000Z",
+      "updatedAt": "2026-04-08T00:00:00.000Z",
+      "relativePath": "notes/architecture/生产AI权限与发布控制设计.md",
+      "url": "/notes/architecture/生产AI权限与发布控制设计",
       "headings": [
+        "生产 AI 权限与发布控制设计",
         "核心原则",
         "身份模型",
         "权限位",
@@ -117,50 +289,46 @@
         "第二阶段：决定是否更新生产",
         "与现有仓库的衔接",
         "数据模型建议",
-        "后端接口建议",
-        "前端呈现建议",
-        "当前落地建议",
-        "当前约束"
+        "后端接口建议"
       ],
-      "url": "/notes/architecture/生产AI权限与发布控制设计",
-      "relativePath": "notes/architecture/生产AI权限与发布控制设计.md",
-      "category": "architecture",
-      "createdAt": "2026-04-08T00:00:00.000Z",
-      "updatedAt": "2026-04-08T00:00:00.000Z",
-      "contentPreview": "生产 AI 权限与发布控制设计\n目标不是让生产站点里的 AI 直接拥有任意文件权限，而是让它成为一个受控入口：\n可以调用现有 MCP 和 skills\n可以按权限修改开发环境知识库\n是否重建与发布生产，由 owner 单独决定\n核心原则\nMarkdown 和仓库源码仍然是唯一真源。\n生产 AI 只能调用白名单动作，不能直接获得任意 shell 权限。\n开发环境写入与生产环境发布必须拆成两个阶段。\n所有写入、授权、发布都必须可审计。\nToken 消耗由 owner 控制，默认不对外开放。\n身份模型\n建议至少定义四类身份：\n：最高权限，负责用户授权、权限分配",
+      "excerpt": "生产 AI 权限与发布控制设计 目标不是让生产站点里的 AI 直接拥有任意文件权限，而是让它成为一个受控入口： 可以调用现有 MCP 和 skills 可以按权限修改开发环境知识库 是否重建与发布生产，由 owner 单独决定 核心原则 Markdown 和仓库源码仍然是唯一真源。 生产 AI 只能调用白名单动作，不能直接获得任意 shell 权限。 开发…",
+      "plainText": "生产 AI 权限与发布控制设计 目标不是让生产站点里的 AI 直接拥有任意文件权限，而是让它成为一个受控入口： 可以调用现有 MCP 和 skills 可以按权限修改开发环境知识库 是否重建与发布生产，由 owner 单独决定 核心原则 Markdown 和仓库源码仍然是唯一真源。 生产 AI 只能调用白名单动作，不能直接获得任意 shell 权限。 开发环境写入与生产环境发布必须拆成两个阶段。 所有写入、授权、发布都必须可审计。 Token 消耗由 owner 控制，默认不对外开放。 身份模型 建议至少定义四类身份： owner：最高权限，负责用户授权、权限分配、Token 配额、知识库增删改查、重建和发布。 editor：可检索、可新增、可追加、可更新元信息，不可发布，不可管理用户。 viewer：只能检索和问答，不能写入。 suspended：账户保留，但禁止调用 AI。 身份只负责给出默认能力，真正执行时仍然要检查细粒度权限位。 权限位 建议把权限拆成可独立分配的能力位： notes.read notes.create notes.update notes.delete docs.reorganize kb.ingest url site.build site.deploy users.manage tokens.use 这样可以实现： 某些用户只能查和新增，不能删除 某些用户可以整理目录，但不能发布 只有 owner 才能分配权限和管理 Token Token 与授权 非 owner 用户建议使用邀请制，而不是开放注册。 推荐流程： 1. 用户申请使用生产 AI。 2. owner 审核并决定是否开通。 3. owner 指定角色、权限位和 Token 配额。 4. 系统记录授权来源、授权时间和配额变更。 5. 用户调用 AI 时先做身份、权限、配额校验，再执行动作。 配额建议至少包含： 每日请求上限 每月 Token 上限 是否允许网页导入 是否允许写入 是否允许提交发布申请 动作白名单 生产 AI 不应直接把模型输出映射为任意命令，而是只允许调用这些受控动作： retrieve add append update meta inspect url ingest url rebuild deploy 其中： retrieve、inspect url 属于只读动作 add、append、update meta、ingest url 属于开发环境写入动作 rebuild、deploy 属于高权限发布动作 两阶段流程 生产 AI 修改知识库建议固定成两阶段： 第一阶段：修改开发环境 1. 用户在生产站点发起请求。 2. AI 识别意图并生成结构化动作参数。 3. 服务端权限网关校验身份、权限位和 Token 配额。 4. 网关调用现有 kb:agent、MCP 或 skill 执行写入。 5. 改动落到开发仓库源码，但默认不自动 build。 6. 系统记录操作日志与变更摘要。 第二阶段：决定是否更新生产 1. 系统生成一条“待发布变更”记录。 2. owner 查看变更摘要、操作者、涉及文件和风险说明。 3. owner 决定是否执行 kb:build。 4. 只有 owner 确认后，才继续部署生产静态产物。 这样可以避免： 普通用户改一条笔记就立即上线 AI 写入和发布耦合 Token 被未授权用户持续消耗 与现有仓库的衔接 当前仓库已有这些可直接复用的能力： scripts/kb/agent.mjs：统一动作入口 scripts/kb/url.mjs：网页抓取与导入 skills/personal kb/SKILL.md：优先检索、低 token 回答约束 建议新增一个服务端动作网关，作为生产 AI 的唯一执行入口。它负责： 校验用户身份 判断权限位 控制 Token 额度 决定可调用哪些 MCP / skills / kb 脚本 记录审计日志 也就是说，MCP 和 skills 是能力层，权限判断必须放在外层网关里。 数据模型建议 最小可用的数据表可以包括： users user permissions ai token quotas ai action logs publish requests 建议字段示例： users：id、name、email、status、role user permissions：user id、permission、granted by、granted at ai token quotas：user id、daily limit、monthly limit、used today、used month ai action logs：user id、action、target、args、result、created at publish requests：id、requested by、summary、status、approved by、created at 后端接口建议 建议至少提供这些接口： POST /api/ai/chat POST /api/ai/actions GET /api/ai/permissions/me POST /api/admin/users/:id/permissions POST /api/admin/users/:id/quota GET /api/admin/publish requests POST /api/admin/publish requests/:id/approve POST /api/admin/publish requests/:id/reject 其中： /api/ai/chat 负责自然语言对话 /api/ai/actions 负责结构化白名单动作执行 /api/admin/ 只对 owner 开放 前端呈现建议 生产站点内的 AI 工具建议显式展示当前用户状态： 当前身份 可执行动作 当前 Token 剩余额度 最近一次写入记录 是否存在待 owner 审批的发布请求 对于无权限动作，不要隐藏能力说明，而是要清楚提示“需要 owner 授权”。 当前落地建议 第一步先改造脚本层： 让 kb:agent 的写入动作默认只写文件，不自动重建 把 kb:build 变成独立发布前动作 第二步再补应用层： 增加用户、权限、额度和审计表 增加服务端动作网关 增加 owner 审批发布界面 当前约束 如果站点未来允许“删除笔记”或“重组 docs.json”，建议一律加入二次确认，且默认只对 owner 放开。 因为这些动作的影响范围比普通追加内容更大，更容易导致导航错乱、引用失效或线上内容回退。",
+      "readingTime": 9,
       "related": [
         {
-          "id": "notes/architecture/owner授权与用户访问控制",
+          "id": "architecture-owner授权与用户访问控制",
           "title": "Owner 授权与用户访问控制",
           "url": "/notes/architecture/owner授权与用户访问控制"
         },
         {
-          "id": "notes/architecture/对话式知识库接入设想",
-          "title": "对话式知识库接入设想",
-          "url": "/notes/architecture/对话式知识库接入设想"
-        },
-        {
-          "id": "notes/architecture/服务器直部署与运行时配置",
+          "id": "architecture-服务器直部署与运行时配置",
           "title": "服务器直部署与运行时配置",
           "url": "/notes/architecture/服务器直部署与运行时配置"
+        },
+        {
+          "id": "retrieval-智能检索约束",
+          "title": "智能检索约束",
+          "url": "/notes/retrieval/智能检索约束"
         }
       ]
     },
     {
-      "id": "notes/architecture/owner授权与用户访问控制",
+      "id": "architecture-owner授权与用户访问控制",
+      "slug": "owner授权与用户访问控制",
       "title": "Owner 授权与用户访问控制",
       "summary": "定义 owner 如何授权普通用户使用生产 AI，并控制其知识库权限、运行时权限和 token 配额。",
-      "tags": [
-        "知识库",
-        "AI",
-        "权限",
-        "用户"
-      ],
-      "aliases": [
-        "user access control",
-        "owner approval"
-      ],
+      "tags": ["知识库", "AI", "权限", "用户"],
+      "aliases": ["user access control", "owner approval"],
+      "category": "architecture",
+      "folder": "architecture",
+      "sectionId": "design",
+      "sectionTitle": "知识库设计",
+      "createdAt": "2026-04-08T00:00:00.000Z",
+      "updatedAt": "2026-04-08T00:00:00.000Z",
+      "relativePath": "notes/architecture/owner授权与用户访问控制.md",
+      "url": "/notes/architecture/owner授权与用户访问控制",
       "headings": [
+        "Owner 授权与用户访问控制",
         "授权原则",
         "角色",
         "基础权限位",
@@ -172,44 +340,44 @@
         "应用层接入方式",
         "单模型约束"
       ],
-      "url": "/notes/architecture/owner授权与用户访问控制",
-      "relativePath": "notes/architecture/owner授权与用户访问控制.md",
-      "category": "architecture",
-      "createdAt": "2026-04-08T00:00:00.000Z",
-      "updatedAt": "2026-04-08T00:00:00.000Z",
-      "contentPreview": "Owner 授权与用户访问控制\n生产 AI 不应面向所有访客默认开放，而应采用 owner 授权模式。\n授权原则\n只有 owner 可以批准新用户使用 AI。\n普通用户默认无权消耗 token。\n权限应细粒度控制，不只依赖单一角色。\n配额控制必须与权限控制同时存在。\n角色\n建议基础角色如下：\n其中 owner 拥有最高权限，并额外掌握运行时配置管理能力。\n基础权限位\n知识库相关：\n站点相关：\n系统相关：\nowner 能力\nowner 除了知识库增删改查，还应能管理：\n用户开通与停用\n用户角色调整\n单个权限位授予和回收\n每日请求上限\n每月 token 上限",
+      "excerpt": "Owner 授权与用户访问控制 生产 AI 不应面向所有访客默认开放，而应采用 owner 授权模式。 授权原则 只有 owner 可以批准新用户使用 AI。 普通用户默认无权消耗 token。 权限应细粒度控制，不只依赖单一角色。 配额控制必须与权限控制同时存在。 角色 建议基础角色如下： owner editor viewer suspended 其中…",
+      "plainText": "Owner 授权与用户访问控制 生产 AI 不应面向所有访客默认开放，而应采用 owner 授权模式。 授权原则 只有 owner 可以批准新用户使用 AI。 普通用户默认无权消耗 token。 权限应细粒度控制，不只依赖单一角色。 配额控制必须与权限控制同时存在。 角色 建议基础角色如下： owner editor viewer suspended 其中 owner 拥有最高权限，并额外掌握运行时配置管理能力。 基础权限位 知识库相关： notes.read notes.create notes.update notes.delete docs.reorganize kb.ingest url 站点相关： site.build site.deploy 系统相关： users.manage tokens.use runtime.manage connection runtime.manage model runtime.manage secret owner 能力 owner 除了知识库增删改查，还应能管理： 用户开通与停用 用户角色调整 单个权限位授予和回收 每日请求上限 每月 token 上限 baseUrl protocol apiKey 当前唯一生效模型 普通用户能力边界 普通用户不应拥有以下能力： 修改上游连接配置 修改 API Key 自主切换模型 直接发布生产 管理其他用户 即使是 editor，也建议默认不开放删除和发布。 本地配置文件 当前建议使用： data/ai access.example.json data/ai access.local.json 其中： example 文件用于定义结构和默认 owner local 文件用于服务器真实用户数据 管理命令 仓库当前已经提供了一个轻量管理入口： pnpm kb:access action inspect pnpm kb:access action add user id alice name Alice role viewer pnpm kb:access action set role id alice role editor pnpm kb:access action grant id alice permission notes.create pnpm kb:access action revoke id alice permission notes.delete pnpm kb:access action set quota id alice dailyRequests 30 monthlyTokens 300000 pnpm kb:access action suspend id alice pnpm kb:access action activate id alice 这些命令适合在真正后台页面完成之前，先由 owner 在服务器上直接管理用户。 配额建议 建议配额至少分成两层： 每日请求次数 每月 token 总量 这样比只限制 token 更容易控制滥用，因为请求次数和 token 消耗分别对应不同风险。 应用层接入方式 后续服务端接入时，建议流程如下： 1. 用户登录或携带身份信息访问 AI。 2. 服务端读取用户角色、权限位和配额。 3. 先判断是否允许消耗 token。 4. 再判断是否允许执行目标动作。 5. 执行动作后记录审计日志。 6. 如涉及发布，转成待 owner 审批。 单模型约束 模型切换不属于普通功能，而属于系统配置。 因此建议始终保持： 系统只保留一个当前生效模型 由 owner 统一决定模型 普通用户只能共享使用该模型 这样可以避免： 用户自行切模型导致成本失控 不同模型行为不一致 上游配置变得难以审计",
+      "readingTime": 5,
       "related": [
         {
-          "id": "notes/architecture/生产AI权限与发布控制设计",
+          "id": "architecture-生产ai权限与发布控制设计",
           "title": "生产 AI 权限与发布控制设计",
           "url": "/notes/architecture/生产AI权限与发布控制设计"
         },
         {
-          "id": "notes/architecture/对话式知识库接入设想",
-          "title": "对话式知识库接入设想",
-          "url": "/notes/architecture/对话式知识库接入设想"
-        },
-        {
-          "id": "notes/architecture/服务器直部署与运行时配置",
+          "id": "architecture-服务器直部署与运行时配置",
           "title": "服务器直部署与运行时配置",
           "url": "/notes/architecture/服务器直部署与运行时配置"
+        },
+        {
+          "id": "architecture-对话式知识库接入设想",
+          "title": "对话式知识库接入设想",
+          "url": "/notes/architecture/对话式知识库接入设想"
         }
       ]
     },
     {
-      "id": "notes/frontend/vite学习笔记",
+      "id": "frontend-vite学习笔记",
+      "slug": "vite学习笔记",
       "title": "Vite 学习笔记",
       "summary": "整理 Vite 中常见的 CSS 配置、路径解析、打包配置与插件示例，方便后续按主题检索。",
-      "tags": [
-        "Vite",
-        "构建工具",
-        "前端工程化"
-      ],
-      "aliases": [
-        "vite note",
-        "vite 配置整理"
-      ],
+      "tags": ["Vite", "构建工具", "前端工程化"],
+      "aliases": ["vite note", "vite 配置整理"],
+      "category": "frontend",
+      "folder": "frontend",
+      "sectionId": "frontend",
+      "sectionTitle": "前端工程化",
+      "createdAt": "2026-04-08T00:00:00.000Z",
+      "updatedAt": "2026-04-08T03:20:00.000Z",
+      "relativePath": "notes/frontend/vite学习笔记.md",
+      "url": "/notes/frontend/vite学习笔记",
       "headings": [
+        "Vite 学习笔记",
         "CSS 配置",
         "CSS Modules",
         "预处理器",
@@ -220,47 +388,83 @@
         "Alias 配置",
         "构建配置",
         "配置示例",
-        "Vite 插件示例",
-        "快速索引"
+        "Vite 插件示例"
       ],
-      "url": "/notes/frontend/vite学习笔记",
-      "relativePath": "notes/frontend/vite学习笔记.md",
-      "category": "frontend",
-      "createdAt": "2026-04-08T00:00:00.000Z",
-      "updatedAt": "2026-04-08T03:20:00.000Z",
-      "contentPreview": "Vite 学习笔记\n这篇笔记整理了使用 Vite 时比较常见的几个配置点，重点包括：\nCSS 模块和预处理器配置\n等路径解析\n打包输出配置\n一个自动生成别名的插件示例\nCSS 配置\nCSS Modules\n  用来控制 CSS Modules 的导出形式和类名生成规则。\n \n \n \n \n \n \n \n关于  ，常见写法如下：\n \n这表示最终类名会由：\n文件名  \n原始类名  \n前 5 位 hash\n组成。\n预处理器\n  用来配置  、  等 CSS 预处理器。\n开发环境 Sourcemap\n  用来控制开发环境是否生成 CSS sourcemap。\n \nP",
-      "related": []
+      "excerpt": "Vite 学习笔记 这篇笔记整理了使用 Vite 时比较常见的几个配置点，重点包括： CSS 模块和预处理器配置 resolve.alias 等路径解析 build 打包输出配置 一个自动生成别名的插件示例 CSS 配置 CSS Modules css.modules 用来控制 CSS Modules 的导出形式和类名生成规则。 属性 说明 常见值 loc…",
+      "plainText": "Vite 学习笔记 这篇笔记整理了使用 Vite 时比较常见的几个配置点，重点包括： CSS 模块和预处理器配置 resolve.alias 等路径解析 build 打包输出配置 一个自动生成别名的插件示例 CSS 配置 CSS Modules css.modules 用来控制 CSS Modules 的导出形式和类名生成规则。 属性 说明 常见值 localsConvention 配置导出对象的 key 命名方式 camelCase、camelCaseOnly、dashes、dashesOnly，也可以传自定义函数 scopeBehaviour 是否默认启用模块化 local 表示默认启用，global 表示默认关闭 generateScopedName 生成模块类名的规则 string 或 (name, filename, css) = string hashPrefix 为 hash 增加前缀 string globalModulePaths 指定不参与模块化的路径 string[] 关于 generateScopedName，常见写法如下： 这表示最终类名会由： 文件名 name 原始类名 local 前 5 位 hash 组成。 预处理器 css.preprocessorOptions 用来配置 sass、less 等 CSS 预处理器。 Sass 详细配置 开发环境 Sourcemap css.devSourcemap 用来控制开发环境是否生成 CSS sourcemap。 PostCSS css.postcss 用来配置 PostCSS 插件。 常见插件： postcss preset env 作用：根据目标浏览器自动补齐一些 CSS 兼容能力。 @csstools/postcss global data 作用：让全局变量文件优先加载，方便后续变量做兼容处理。 路径解析 静态资源导入 Vite 处理静态资源时，可以在导入路径后追加参数： ?url ?raw 示意图： 控制台输出示意： Alias 配置 resolve.alias 用来配置路径别名。 属性 说明 常见写法 alias 路径别名配置 { \"@\": fileURLToPath(new URL(\"./src\", import.meta.url)) } 构建配置 build 常见配置如下： 这些字段分别表示： assetFileNames：静态资源打包后的命名方式 assetsInlineLimit：小于指定大小的图片转成 base64 outDir：输出目录 assetsDir：静态资源目录 sourcemap：是否生成 sourcemap minify：是否压缩 emptyOutDir：构建前是否清空输出目录 配置示例 下面是一个较完整的 Vite 配置示例： 补充阅读： Vite 官方配置文档 Rollup 配置文档 Vite 插件示例 Vite 插件可以在不同生命周期中介入构建过程，完成自动化配置或打包增强。 下面这个例子会自动扫描 src 目录下的子文件夹，并把它们注册成路径别名： 目录结构示意： 最终生成的 alias 配置示意： 快速索引 如果之后要继续扩展这篇笔记，推荐优先从下面几个方向补充： optimizeDeps server.proxy plugins define 多环境变量管理",
+      "readingTime": 4,
+      "related": [
+        {
+          "id": "tools-awesome-apis-中文资源总结",
+          "title": "Awesome APIs 中文资源总结",
+          "url": "/notes/tools/awesome-apis-中文资源总结"
+        },
+        {
+          "id": "tools-cliproxyapi-项目整理",
+          "title": "CLIProxyAPI 项目整理",
+          "url": "/notes/tools/CLIProxyAPI 项目整理"
+        },
+        {
+          "id": "web-clips-杀疯了-前端最强-10-个-ai-skills-效率提升500",
+          "title": "杀疯了！前端最强 10 个 AI Skills ！效率提升500%！",
+          "url": "/notes/web-clips/杀疯了-前端最强-10-个-ai-skills-效率提升500"
+        }
+      ]
     },
     {
-      "id": "notes/inbox/dev-flow-owner-note",
+      "id": "inbox-dev-flow-owner-note",
+      "slug": "dev-flow-owner-note",
       "title": "dev-flow-owner-note",
-      "summary": "dev-flow-owner-note",
+      "summary": "dev flow owner note This note is created from the local AI dev workflow.",
       "tags": [],
       "aliases": [],
-      "headings": [],
-      "url": "/notes/inbox/dev-flow-owner-note",
-      "relativePath": "notes/inbox/dev-flow-owner-note.md",
       "category": "inbox",
+      "folder": "inbox",
+      "sectionId": "start",
+      "sectionTitle": "开始使用",
       "createdAt": "2026-04-08T05:38:01.797Z",
       "updatedAt": "2026-04-08T05:38:01.797Z",
-      "contentPreview": "dev-flow-owner-note\nThis note is created from the local AI dev workflow.",
-      "related": []
+      "relativePath": "notes/inbox/dev-flow-owner-note.md",
+      "url": "/notes/inbox/dev-flow-owner-note",
+      "headings": ["dev-flow-owner-note"],
+      "excerpt": "dev flow owner note This note is created from the local AI dev workflow.",
+      "plainText": "dev flow owner note This note is created from the local AI dev workflow.",
+      "readingTime": 1,
+      "related": [
+        {
+          "id": "architecture-服务器直部署与运行时配置",
+          "title": "服务器直部署与运行时配置",
+          "url": "/notes/architecture/服务器直部署与运行时配置"
+        },
+        {
+          "id": "architecture-生产ai权限与发布控制设计",
+          "title": "生产 AI 权限与发布控制设计",
+          "url": "/notes/architecture/生产AI权限与发布控制设计"
+        },
+        {
+          "id": "architecture-owner授权与用户访问控制",
+          "title": "Owner 授权与用户访问控制",
+          "url": "/notes/architecture/owner授权与用户访问控制"
+        }
+      ]
     },
     {
-      "id": "notes/inbox/getting-started",
+      "id": "inbox-getting-started",
+      "slug": "getting-started",
       "title": "知识库开始使用",
       "summary": "通过开发工作台更新的摘要。",
-      "tags": [
-        "知识库",
-        "工作流",
-        "Codex",
-        "OpenCode"
-      ],
-      "aliases": [
-        "kb guide",
-        "知识库说明"
-      ],
+      "tags": ["知识库", "工作流", "Codex", "OpenCode"],
+      "aliases": ["kb guide", "知识库说明"],
+      "category": "inbox",
+      "folder": "inbox",
+      "sectionId": "start",
+      "sectionTitle": "开始使用",
+      "createdAt": "2026-04-08T00:00:00.000Z",
+      "updatedAt": "2026-04-08T05:41:57.887Z",
+      "relativePath": "notes/inbox/getting-started.md",
+      "url": "/notes/inbox/getting-started",
       "headings": [
+        "知识库开始使用",
         "核心原则",
         "命令入口",
         "docs.json 驱动的目录",
@@ -268,130 +472,185 @@
         "仓库内 Skill",
         "网页导入"
       ],
-      "url": "/notes/inbox/getting-started",
-      "relativePath": "notes/inbox/getting-started.md",
-      "category": "inbox",
-      "createdAt": "2026-04-08T00:00:00.000Z",
-      "updatedAt": "2026-04-08T05:41:57.887Z",
-      "contentPreview": "知识库开始使用\n当前项目已经升级为一个以 Markdown 为底座的个人知识库系统。\n核心原则\nMarkdown 是唯一真源，AI 只负责辅助整理和写回。\n检索优先，生成其次，避免每次问答都把整个知识库喂给模型。\n目录、索引、最近更新这些高频结构由本地脚本维护，减少 token 消耗。\n目录结构由   驱动，AI 调整信息架构时优先改这个文件。\n命令入口\n：重建知识库索引、目录页和站点导航。\n：新增一篇笔记。\n：给某篇笔记追加内容。\n：本地检索最相关的笔记。\n：输出适合喂给 AI 的紧凑上下文。\n：给 AI 的统一入口，适合 Codex 或 OpenCo",
+      "excerpt": "知识库开始使用 当前项目已经升级为一个以 Markdown 为底座的个人知识库系统。 核心原则 Markdown 是唯一真源，AI 只负责辅助整理和写回。 检索优先，生成其次，避免每次问答都把整个知识库喂给模型。 目录、索引、最近更新这些高频结构由本地脚本维护，减少 token 消耗。 目录结构由 data/docs.json 驱动，AI 调整信息架构时优…",
+      "plainText": "知识库开始使用 当前项目已经升级为一个以 Markdown 为底座的个人知识库系统。 核心原则 Markdown 是唯一真源，AI 只负责辅助整理和写回。 检索优先，生成其次，避免每次问答都把整个知识库喂给模型。 目录、索引、最近更新这些高频结构由本地脚本维护，减少 token 消耗。 目录结构由 data/docs.json 驱动，AI 调整信息架构时优先改这个文件。 命令入口 pnpm kb:build：重建知识库索引、目录页和站点导航。 pnpm kb:add title \"标题\" category inbox tags 标签1,标签2 content \"正文\"：新增一篇笔记。 pnpm kb:update slug getting started append \"补充内容\"：给某篇笔记追加内容。 pnpm kb:search 检索词：本地检索最相关的笔记。 pnpm kb:context 检索词：输出适合喂给 AI 的紧凑上下文。 pnpm kb:agent action retrieve query \"问题\"：给 AI 的统一入口，适合 Codex 或 OpenCode 在上层驱动。 pnpm kb:url action inspect url \"https://example.com\"：抓取网页并提取正文，但不写入知识库。 pnpm kb:agent action ingest url url \"https://example.com\"：抓取网页正文并写入知识库。 docs.json 驱动的目录 data/docs.json 记录每个文档的结构化信息，例如： 文档属于哪个 section 在导航里的显示标题 排序顺序 是否隐藏 section 的名称和描述 构建时会先扫描 Markdown 文件，再和 data/docs.json 合并，最终生成： header 中的知识库总入口 notes/index.md /notes/ 侧边栏 这样做的好处是，AI 不需要通过文件夹名字猜目录结构，而是只需要维护一个紧凑的结构化文件。 未来如何接入对话式更新 后续无论是在 Codex 还是 OpenCode 中，都可以把用户意图收束成几个稳定动作： add：新增笔记 append：向现有笔记追加内容 update meta：更新摘要、标签、别名 search：先检索，再回答 这样做的好处是，AI 不需要直接“自由发挥改库”，而是执行有限的可审计动作。 仓库内 Skill 当前仓库还提供了一个轻量 skill： skills/personal kb/SKILL.md 它的职责不是执行写入，而是约束 AI 始终先走 kb:agent retrieve，只在命中结果不足时才扩大读取范围。 网页导入 网页导入采用两层策略： 先用 curl 抓取，适合普通 SSR 页面。 如果正文过短、页面脚本过多，或者遇到验证页，再切到 headless Chrome dump dom，适合 SPA 或客户端渲染页面。 像微信文章这类页面，通常更适合走浏览器抓取。",
+      "readingTime": 4,
       "related": [
         {
-          "id": "notes/architecture/生产AI权限与发布控制设计",
+          "id": "architecture-生产ai权限与发布控制设计",
           "title": "生产 AI 权限与发布控制设计",
           "url": "/notes/architecture/生产AI权限与发布控制设计"
         },
         {
-          "id": "notes/retrieval/智能检索约束",
-          "title": "智能检索约束",
-          "url": "/notes/retrieval/智能检索约束"
-        },
-        {
-          "id": "notes/architecture/对话式知识库接入设想",
-          "title": "对话式知识库接入设想",
-          "url": "/notes/architecture/对话式知识库接入设想"
-        }
-      ]
-    },
-    {
-      "id": "notes/retrieval/智能检索约束",
-      "title": "智能检索约束",
-      "summary": "说明为什么 AI 上层应该先取紧凑上下文，再决定是否扩大读取范围。",
-      "tags": [
-        "知识库",
-        "检索",
-        "低token",
-        "工作流"
-      ],
-      "aliases": [
-        "compact-retrieval",
-        "智能召回"
-      ],
-      "headings": [],
-      "url": "/notes/retrieval/智能检索约束",
-      "relativePath": "notes/retrieval/智能检索约束.md",
-      "category": "retrieval",
-      "createdAt": "2026-04-08T02:21:20.860Z",
-      "updatedAt": "2026-04-08T02:22:10.283Z",
-      "contentPreview": "智能检索约束\n检索阶段优先返回标题、摘要、标签、命中片段和路径，只有在结果不足时才读取单篇原文。",
-      "related": [
-        {
-          "id": "notes/architecture/生产AI权限与发布控制设计",
-          "title": "生产 AI 权限与发布控制设计",
-          "url": "/notes/architecture/生产AI权限与发布控制设计"
-        },
-        {
-          "id": "notes/inbox/getting-started",
-          "title": "知识库开始使用",
-          "url": "/notes/inbox/getting-started"
-        },
-        {
-          "id": "notes/architecture/对话式知识库接入设想",
-          "title": "对话式知识库接入设想",
-          "url": "/notes/architecture/对话式知识库接入设想"
-        }
-      ]
-    },
-    {
-      "id": "notes/tools/开发AI工作台",
-      "title": "AI 控制台接入说明",
-      "summary": "说明站点内的 AI 控制台现在已从正文页移到 header 入口，并以独立右侧工作区展示。",
-      "tags": [
-        "AI",
-        "控制台",
-        "Dev",
-        "权限"
-      ],
-      "aliases": [
-        "dev ai console",
-        "dev ai workbench"
-      ],
-      "headings": [],
-      "url": "/notes/tools/开发AI工作台",
-      "relativePath": "notes/tools/开发AI工作台.md",
-      "category": "tools",
-      "createdAt": "2026-04-08T00:00:00.000Z",
-      "updatedAt": "2026-04-08T00:00:00.000Z",
-      "contentPreview": "AI 控制台接入说明\nAI 控制台现在不再作为正文页嵌在内容区里，而是：\n入口放在 header\n点击后展开独立右侧工作区\n工作区内部使用纵向 Tab\n与页面正文分栏展示，不再混进文档内容\n当前已接入的动作：\n说明：\n已接入\n已接入\n已接入\n现在也已接入\n真正的自然语言模型编排还没接到这个 dev 页面里，当前是“对话式受控动作台”",
-      "related": [
-        {
-          "id": "notes/architecture/生产AI权限与发布控制设计",
-          "title": "生产 AI 权限与发布控制设计",
-          "url": "/notes/architecture/生产AI权限与发布控制设计"
-        },
-        {
-          "id": "notes/architecture/owner授权与用户访问控制",
+          "id": "architecture-owner授权与用户访问控制",
           "title": "Owner 授权与用户访问控制",
           "url": "/notes/architecture/owner授权与用户访问控制"
         },
         {
-          "id": "notes/architecture/对话式知识库接入设想",
-          "title": "对话式知识库接入设想",
-          "url": "/notes/architecture/对话式知识库接入设想"
+          "id": "inbox-project-overview",
+          "title": "项目总览",
+          "url": "/notes/inbox/project-overview"
         }
       ]
     },
     {
-      "id": "notes/tools/awesome-apis-中文资源总结",
-      "title": "Awesome APIs 中文资源总结",
-      "summary": "Awesome APIs 中文资源总结",
-      "tags": [
-        "api",
-        "开发资源",
-        "github",
-        "awesome-list"
+      "id": "inbox-project-overview",
+      "slug": "project-overview",
+      "title": "项目总览",
+      "summary": "说明这个项目为什么存在、现在的重构方向是什么，以及它最终想提供怎样的知识库体验。",
+      "tags": ["知识库", "项目概览", "AI", "检索", "Markdown"],
+      "aliases": ["project overview", "项目介绍", "这个项目是做什么的"],
+      "category": "inbox",
+      "folder": "inbox",
+      "sectionId": "start",
+      "sectionTitle": "开始使用",
+      "createdAt": "2026-04-14T00:00:00.000Z",
+      "updatedAt": "2026-04-14T00:00:00.000Z",
+      "relativePath": "notes/inbox/project-overview.md",
+      "url": "/notes/inbox/project-overview",
+      "headings": [
+        "项目总览",
+        "1. 让分散的笔记变成可持续生长的知识库",
+        "2. 让站点和 AI 使用同一份知识数据",
+        "3. 让 AI 先检索、再回答",
+        "4. 让知识系统足够简单，方便后续继续扩展",
+        "当前重构后的整体思路"
       ],
-      "aliases": [],
-      "headings": [],
-      "url": "/notes/tools/awesome-apis-中文资源总结",
-      "relativePath": "notes/tools/awesome-apis-中文资源总结.md",
-      "category": "tools",
-      "createdAt": "2026-04-08T16:41:44.792Z",
-      "updatedAt": "2026-04-08T16:41:44.792Z",
-      "contentPreview": "Awesome APIs 中文资源总结\n这是一个名为“Awesome APIs”的GitHub仓库的中文README文件，旨在为开发者收集和整理各类优秀的API资源。\n**核心目的**：\n收集和分类“非常好的API”，方便开发者查找和集成。\n鼓励社区参与（Star、Fork、提交PR）。\n**内容结构**：\n庞大的分类目录，涵盖数十个领域，每个类别下列举相关API及其简要说明。\n**主要涵盖领域**：\n**开发与平台**：GitHub、GitLab、云服务（阿里云、腾讯云等）、开发工具（CircleCI、TravisCI）。\n**社交媒体与通信**：Fa",
-      "related": []
+      "excerpt": "项目总览 这个项目的目标不是单纯写博客，而是做一个以 Markdown 为唯一真源 的个人知识系统。 它主要解决四个问题： 1. 让分散的笔记变成可持续生长的知识库 过去的笔记可能散落在不同目录、不同文档里，查找和复用成本很高。 这个项目把所有知识内容统一收进 notes/ .md，再用本地脚本生成统一索引、目录和导航。 2. 让站点和 AI 使用同一份知…",
+      "plainText": "项目总览 这个项目的目标不是单纯写博客，而是做一个以 Markdown 为唯一真源 的个人知识系统。 它主要解决四个问题： 1. 让分散的笔记变成可持续生长的知识库 过去的笔记可能散落在不同目录、不同文档里，查找和复用成本很高。 这个项目把所有知识内容统一收进 notes/ .md，再用本地脚本生成统一索引、目录和导航。 2. 让站点和 AI 使用同一份知识数据 以前最容易出问题的地方，是前端有一套数据来源、后端又有另一套接口逻辑。 这次重构后的核心原则是： 前端目录来自统一的知识索引 后端搜索来自统一的知识索引 AI 问答也先基于统一的知识索引检索 这样前后端不会再各自维护一套难以对齐的状态。 3. 让 AI 先检索、再回答 这个项目并不希望 AI 直接“自由发挥”，而是要求它先找到相关笔记，再基于命中内容做整理。 如果没有命中结果，就应该明确说不知道，而不是编造答案。 4. 让知识系统足够简单，方便后续继续扩展 当前版本只保留真正必要的部分： Markdown 知识库 本地知识索引 站点首页和知识目录 检索优先的 AI 工作台 可选的远程大模型整理能力 后续如果要继续扩展，再往这个基础上增加写入动作、权限管理或网页导入能力会更稳。 当前重构后的整体思路 现在的项目结构可以概括成一句话： 用 Markdown 存知识，用统一索引驱动站点，用检索优先的 API 和 AI 工作台消费这份知识。 如果你只想快速理解这个项目，优先看这三处： 首页：看整体定位 /notes/：看知识内容怎么被组织 /ai/：看 AI 如何围绕知识检索工作",
+      "readingTime": 2,
+      "related": [
+        {
+          "id": "retrieval-智能检索约束",
+          "title": "智能检索约束",
+          "url": "/notes/retrieval/智能检索约束"
+        },
+        {
+          "id": "architecture-对话式知识库接入设想",
+          "title": "对话式知识库接入设想",
+          "url": "/notes/architecture/对话式知识库接入设想"
+        },
+        {
+          "id": "architecture-生产ai权限与发布控制设计",
+          "title": "生产 AI 权限与发布控制设计",
+          "url": "/notes/architecture/生产AI权限与发布控制设计"
+        }
+      ]
     },
     {
-      "id": "notes/tools/CLIProxyAPI 项目整理",
+      "id": "retrieval-智能检索约束",
+      "slug": "智能检索约束",
+      "title": "智能检索约束",
+      "summary": "说明为什么 AI 上层应该先取紧凑上下文，再决定是否扩大读取范围。",
+      "tags": ["知识库", "检索", "低token", "工作流"],
+      "aliases": ["compact-retrieval", "智能召回"],
+      "category": "retrieval",
+      "folder": "retrieval",
+      "sectionId": "retrieval",
+      "sectionTitle": "检索与回答",
+      "createdAt": "2026-04-08T02:21:20.860Z",
+      "updatedAt": "2026-04-08T02:22:10.283Z",
+      "relativePath": "notes/retrieval/智能检索约束.md",
+      "url": "/notes/retrieval/智能检索约束",
+      "headings": ["智能检索约束"],
+      "excerpt": "智能检索约束 检索阶段优先返回标题、摘要、标签、命中片段和路径，只有在结果不足时才读取单篇原文。",
+      "plainText": "智能检索约束 检索阶段优先返回标题、摘要、标签、命中片段和路径，只有在结果不足时才读取单篇原文。",
+      "readingTime": 1,
+      "related": [
+        {
+          "id": "architecture-生产ai权限与发布控制设计",
+          "title": "生产 AI 权限与发布控制设计",
+          "url": "/notes/architecture/生产AI权限与发布控制设计"
+        },
+        {
+          "id": "inbox-project-overview",
+          "title": "项目总览",
+          "url": "/notes/inbox/project-overview"
+        },
+        {
+          "id": "inbox-getting-started",
+          "title": "知识库开始使用",
+          "url": "/notes/inbox/getting-started"
+        }
+      ]
+    },
+    {
+      "id": "tools-开发ai工作台",
+      "slug": "开发AI工作台",
+      "title": "AI 控制台接入说明",
+      "summary": "说明站点内的 AI 控制台现在已从正文页移到 header 入口，并以独立右侧工作区展示。",
+      "tags": ["AI", "控制台", "Dev", "权限"],
+      "aliases": ["dev ai console", "dev ai workbench"],
+      "category": "tools",
+      "folder": "tools",
+      "sectionId": "tools",
+      "sectionTitle": "开发工具",
+      "createdAt": "2026-04-08T00:00:00.000Z",
+      "updatedAt": "2026-04-08T00:00:00.000Z",
+      "relativePath": "notes/tools/开发AI工作台.md",
+      "url": "/notes/tools/开发AI工作台",
+      "headings": ["AI 控制台接入说明"],
+      "excerpt": "AI 控制台接入说明 AI 控制台现在不再作为正文页嵌在内容区里，而是： 入口放在 header 点击后展开独立右侧工作区 工作区内部使用纵向 Tab 与页面正文分栏展示，不再混进文档内容 当前已接入的动作： retrieve add append update meta delete inspect url ingest url 说明： 读 已接入 增…",
+      "plainText": "AI 控制台接入说明 AI 控制台现在不再作为正文页嵌在内容区里，而是： 入口放在 header 点击后展开独立右侧工作区 工作区内部使用纵向 Tab 与页面正文分栏展示，不再混进文档内容 当前已接入的动作： retrieve add append update meta delete inspect url ingest url 说明： 读 已接入 增 已接入 改 已接入 删 现在也已接入 真正的自然语言模型编排还没接到这个 dev 页面里，当前是“对话式受控动作台”",
+      "readingTime": 1,
+      "related": [
+        {
+          "id": "architecture-生产ai权限与发布控制设计",
+          "title": "生产 AI 权限与发布控制设计",
+          "url": "/notes/architecture/生产AI权限与发布控制设计"
+        },
+        {
+          "id": "architecture-owner授权与用户访问控制",
+          "title": "Owner 授权与用户访问控制",
+          "url": "/notes/architecture/owner授权与用户访问控制"
+        },
+        {
+          "id": "inbox-project-overview",
+          "title": "项目总览",
+          "url": "/notes/inbox/project-overview"
+        }
+      ]
+    },
+    {
+      "id": "tools-awesome-apis-中文资源总结",
+      "slug": "awesome-apis-中文资源总结",
+      "title": "Awesome APIs 中文资源总结",
+      "summary": "Awesome APIs 中文资源总结 这是一个名为“Awesome APIs”的GitHub仓库的中文README文件，旨在为开发者收集和整理各类优秀的API资源。 核心目的 ： 收集和分类“非常好的API”，方便开发者查找和集成。 鼓…",
+      "tags": ["api", "开发资源", "github", "awesome-list"],
+      "aliases": [],
+      "category": "tools",
+      "folder": "tools",
+      "sectionId": "tools",
+      "sectionTitle": "开发工具",
+      "createdAt": "2026-04-08T16:41:44.792Z",
+      "updatedAt": "2026-04-08T16:41:44.792Z",
+      "relativePath": "notes/tools/awesome-apis-中文资源总结.md",
+      "url": "/notes/tools/awesome-apis-中文资源总结",
+      "headings": ["Awesome APIs 中文资源总结"],
+      "excerpt": "Awesome APIs 中文资源总结 这是一个名为“Awesome APIs”的GitHub仓库的中文README文件，旨在为开发者收集和整理各类优秀的API资源。 核心目的 ： 收集和分类“非常好的API”，方便开发者查找和集成。 鼓励社区参与（Star、Fork、提交PR）。 内容结构 ： 庞大的分类目录，涵盖数十个领域，每个类别下列举相关API及其…",
+      "plainText": "Awesome APIs 中文资源总结 这是一个名为“Awesome APIs”的GitHub仓库的中文README文件，旨在为开发者收集和整理各类优秀的API资源。 核心目的 ： 收集和分类“非常好的API”，方便开发者查找和集成。 鼓励社区参与（Star、Fork、提交PR）。 内容结构 ： 庞大的分类目录，涵盖数十个领域，每个类别下列举相关API及其简要说明。 主要涵盖领域 ： 1. 开发与平台 ：GitHub、GitLab、云服务（阿里云、腾讯云等）、开发工具（CircleCI、TravisCI）。 2. 社交媒体与通信 ：Facebook、Twitter、微博、Slack、Telegram。 3. 多媒体与内容 ：音乐（Spotify、SoundCloud）、视频（YouTube、Vimeo）、图像（Unsplash、Imgur）、新闻（纽约时报、HackerNews）。 4. 生活与商业服务 ：地图（高德、Google Maps）、支付（PayPal）、外卖（饿了么、美团）、旅游（携程、去哪儿）、天气（彩云天气、和风天气）。 5. 新兴技术 ：物联网（Philips Hue）、机器学习（Google Cloud Prediction、IBM Watson）、人工智能服务（语音/图像分析）。 6. 其他垂直领域 ：二次元、物流、设计等。 额外资源 ： 列出了“百度API STORE”、“聚合数据”等综合性API资源平台。 总结 ： 该文档是一个面向开发者的、按领域分类的API资源大全，旨在帮助开发者快速查找和集成所需的服务接口。 来源URL ：https://github.com/TonnyL/Awesome APIs/blob/master/README zh.md",
+      "readingTime": 2,
+      "related": [
+        {
+          "id": "tools-cliproxyapi-项目整理",
+          "title": "CLIProxyAPI 项目整理",
+          "url": "/notes/tools/CLIProxyAPI 项目整理"
+        },
+        {
+          "id": "frontend-vite学习笔记",
+          "title": "Vite 学习笔记",
+          "url": "/notes/frontend/vite学习笔记"
+        },
+        {
+          "id": "web-clips-杀疯了-前端最强-10-个-ai-skills-效率提升500",
+          "title": "杀疯了！前端最强 10 个 AI Skills ！效率提升500%！",
+          "url": "/notes/web-clips/杀疯了-前端最强-10-个-ai-skills-效率提升500"
+        }
+      ]
+    },
+    {
+      "id": "tools-cliproxyapi-项目整理",
+      "slug": "CLIProxyAPI 项目整理",
       "title": "CLIProxyAPI 项目整理",
       "summary": "CLIProxyAPI 是一个把多种 AI CLI 能力包装成兼容 OpenAI、Gemini、Claude、Codex 接口的代理服务，适合把 OAuth 登录得到的 CLI 能力统一暴露成 API。",
       "tags": [
@@ -402,11 +661,17 @@
         "Gemini",
         "Codex"
       ],
-      "aliases": [
-        "CLIProxyAPI",
-        "CLI Proxy API"
-      ],
+      "aliases": ["CLIProxyAPI", "CLI Proxy API"],
+      "category": "tools",
+      "folder": "tools",
+      "sectionId": "tools",
+      "sectionTitle": "开发工具",
+      "createdAt": "2026-04-08T00:00:00.000Z",
+      "updatedAt": "2026-04-08T03:40:00.000Z",
+      "relativePath": "notes/tools/CLIProxyAPI 项目整理.md",
+      "url": "/notes/tools/CLIProxyAPI 项目整理",
       "headings": [
+        "CLIProxyAPI 项目整理",
         "这个项目是干什么的",
         "核心能力",
         "适合什么场景",
@@ -417,109 +682,69 @@
         "需要注意的点",
         "结论"
       ],
-      "url": "/notes/tools/CLIProxyAPI 项目整理",
-      "relativePath": "notes/tools/CLIProxyAPI 项目整理.md",
-      "category": "tools",
-      "createdAt": "2026-04-08T00:00:00.000Z",
-      "updatedAt": "2026-04-08T03:40:00.000Z",
-      "contentPreview": "CLIProxyAPI 项目整理\n> 项目地址： \n> 参考来源：GitHub README、仓库首页、Releases 页面\n这个项目是干什么的\nCLIProxyAPI 是一个代理服务，目标是把多种 AI CLI 或 OAuth 能力统一包装成兼容以下接口风格的 API：\nOpenAI\nGemini\nClaude\nCodex\n它的核心价值不是“做一个聊天前端”，而是把本地或多账号的 CLI / OAuth 访问能力，转成标准 API 形式，方便继续接到各种客户端、SDK、IDE 插件或代理链路里。\n核心能力\n根据仓库 README，这个项目当前重点支持",
+      "excerpt": "CLIProxyAPI 项目整理 项目地址：router for me/CLIProxyAPI 参考来源：GitHub README、仓库首页、Releases 页面 这个项目是干什么的 CLIProxyAPI 是一个代理服务，目标是把多种 AI CLI 或 OAuth 能力统一包装成兼容以下接口风格的 API： OpenAI Gemini Claude…",
+      "plainText": "CLIProxyAPI 项目整理 项目地址：router for me/CLIProxyAPI 参考来源：GitHub README、仓库首页、Releases 页面 这个项目是干什么的 CLIProxyAPI 是一个代理服务，目标是把多种 AI CLI 或 OAuth 能力统一包装成兼容以下接口风格的 API： OpenAI Gemini Claude Codex 它的核心价值不是“做一个聊天前端”，而是把本地或多账号的 CLI / OAuth 访问能力，转成标准 API 形式，方便继续接到各种客户端、SDK、IDE 插件或代理链路里。 核心能力 根据仓库 README，这个项目当前重点支持： OpenAI / Gemini / Claude 兼容 API OpenAI Codex（GPT 模型）OAuth 登录 Claude Code OAuth 登录 Qwen Code OAuth 登录 iFlow OAuth 登录 多账号轮询与负载均衡 流式与非流式响应 Function calling / tools 多模态输入（文本与图片） OpenAI 兼容上游提供商接入 Go SDK 嵌入能力 换句话说，它更像一个“统一协议层 + 账号路由层”，把不同来源的模型访问方式收口到一个服务里。 适合什么场景 这个项目比较适合下面几类场景： 想把 CLI 侧的 OAuth 能力暴露成标准 API 想统一接入 Claude、Gemini、Codex、Qwen 等多个来源 想做多账号轮询或容灾切换 想给现有 OpenAI compatible 客户端一个可替换的后端 想把这层能力嵌进自己的 Go 项目或桌面工具里 我对它的理解 如果用一句话概括： CLIProxyAPI 是一个把“面向 CLI / OAuth 的模型访问方式”翻译成“面向标准 API 的调用方式”的中间层。 它解决的不是模型本身，而是： 接口兼容 多账号调度 上游路由 OAuth 登录接入 不同客户端之间的复用 所以它对“想复用 CLI 订阅能力的人”会很有吸引力。 仓库里能看到的结构信号 从仓库首页能看到这些目录： cmd/server internal sdk docs examples auths 这说明它不只是一个临时脚本，而是一个已经产品化、可嵌入、可扩展的 Go 服务项目。 README 里也明确提到： 提供 Go SDK 提供 Management API 提供 Amp CLI / IDE 集成支持 这进一步说明它是一个“基础设施组件”，不是单纯的个人玩具项目。 简单优缺点判断 优点 能把多种 CLI / OAuth 能力统一到一个 API 入口 对 OpenAI compatible 客户端友好 支持多账号和轮询，适合做高可用接入 已经形成配套生态，有管理中心和相关项目 需要注意的点 它本身是代理层，不是模型服务本身 强依赖外部 CLI / OAuth 能力是否稳定 如果上游策略变化，代理层也可能需要跟着维护 兼容面越广，后续维护复杂度也越高 结论 如果你的目标是“把多个 AI CLI / OAuth 入口统一成一个标准 API 服务”，CLIProxyAPI 是很典型的一类方案。 它的定位不是替代模型平台，而是成为模型访问方式之间的转换层和调度层。",
+      "readingTime": 4,
       "related": [
         {
-          "id": "notes/inbox/getting-started",
+          "id": "tools-awesome-apis-中文资源总结",
+          "title": "Awesome APIs 中文资源总结",
+          "url": "/notes/tools/awesome-apis-中文资源总结"
+        },
+        {
+          "id": "web-clips-杀疯了-前端最强-10-个-ai-skills-效率提升500",
+          "title": "杀疯了！前端最强 10 个 AI Skills ！效率提升500%！",
+          "url": "/notes/web-clips/杀疯了-前端最强-10-个-ai-skills-效率提升500"
+        },
+        {
+          "id": "inbox-getting-started",
           "title": "知识库开始使用",
           "url": "/notes/inbox/getting-started"
         }
       ]
     },
     {
-      "id": "notes/web-clips/杀疯了-前端最强-10-个-ai-skills-效率提升500",
+      "id": "web-clips-杀疯了-前端最强-10-个-ai-skills-效率提升500",
+      "slug": "杀疯了-前端最强-10-个-ai-skills-效率提升500",
       "title": "杀疯了！前端最强 10 个 AI Skills ！效率提升500%！",
       "summary": "给前端同学整理了10个超实用的Agent开发技能，覆盖界面开发、项目搭建、代码质检、自动化测试、文档维护等全流程\\n一、界面开发 & 项目搭建🎨 frontend-design来自Anthropic官方的前端界面构建工具，主打快速产出有设计感的页面。 不管是从零封装组件，还是对现有",
-      "tags": [
-        "微信",
-        "AI",
-        "前端"
-      ],
+      "tags": ["微信", "AI", "前端"],
       "aliases": [],
+      "category": "web-clips",
+      "folder": "web-clips",
+      "sectionId": "web-clips",
+      "sectionTitle": "网页摘录",
+      "createdAt": "2026-04-08T02:46:30.114Z",
+      "updatedAt": "2026-04-08T02:46:30.114Z",
+      "relativePath": "notes/web-clips/杀疯了-前端最强-10-个-ai-skills-效率提升500.md",
+      "url": "/notes/web-clips/杀疯了-前端最强-10-个-ai-skills-效率提升500",
       "headings": [
+        "杀疯了！前端最强 10 个 AI Skills ！效率提升500%！",
         "一、界面开发 & 项目搭建",
         "二、代码质量 & 自动审查",
         "三、测试 & 工程化提效",
         "四、文档 & 工具搜索"
       ],
-      "url": "/notes/web-clips/杀疯了-前端最强-10-个-ai-skills-效率提升500",
-      "relativePath": "notes/web-clips/杀疯了-前端最强-10-个-ai-skills-效率提升500.md",
-      "category": "web-clips",
-      "createdAt": "2026-04-08T02:46:30.114Z",
-      "updatedAt": "2026-04-08T02:46:30.114Z",
-      "contentPreview": "杀疯了！前端最强 10 个 AI Skills ！效率提升500%！\n> 来源： \n> 作者：林三心不学挖掘机\n> 抓取方式：http\n给前端同学整理了10个**超实用的Agent开发技能**，覆盖界面开发、项目搭建、代码质检、自动化测试、文档维护等全流程\n一、界面开发 & 项目搭建\n🎨 frontend-design\n来自Anthropic官方的前端界面构建工具，主打快速产出有设计感的页面。 不管是从零封装组件，还是对现有页面做重构升级，都能直接生成可用的UI代码，特别适合需要快速出稿、又不想太丑的业务场景。\n仓库地址：https://github.",
+      "excerpt": "杀疯了！前端最强 10 个 AI Skills ！效率提升500%！ 来源：微信公众平台 作者：林三心不学挖掘机 抓取方式：http 给前端同学整理了10个 超实用的Agent开发技能 ，覆盖界面开发、项目搭建、代码质检、自动化测试、文档维护等全流程 一、界面开发 & 项目搭建 🎨 frontend design 来自Anthropic官方的前端界面构建…",
+      "plainText": "杀疯了！前端最强 10 个 AI Skills ！效率提升500%！ 来源：微信公众平台 作者：林三心不学挖掘机 抓取方式：http 给前端同学整理了10个 超实用的Agent开发技能 ，覆盖界面开发、项目搭建、代码质检、自动化测试、文档维护等全流程 一、界面开发 & 项目搭建 🎨 frontend design 来自Anthropic官方的前端界面构建工具，主打快速产出有设计感的页面。 不管是从零封装组件，还是对现有页面做重构升级，都能直接生成可用的UI代码，特别适合需要快速出稿、又不想太丑的业务场景。 仓库地址：https://github.com/anthropics/skills/tree/main/skills/frontend design 安装命令： 🧩 fullstack developer 一站式全栈项目脚手架助手，适合快速落地想法。 可以直接帮你搭建一套完整项目：前端用React/Next.js，后端基于Node.js，顺带把数据库和接口逻辑串联起来。做Demo、侧项目或快速原型非常香。 仓库地址：https://github.com/Shubhamsaboo/awesome llm apps/tree/main/awesome agent skills/fullstack developer 安装命令： ⚡ cache components Next.js团队内部使用的组件缓存优化工具，专门适配PPR（Partial Prerendering）。 它会自动帮你梳理缓存逻辑，该缓存的缓存、该失效的失效，同时清理掉旧版不合理的页面级缓存策略，对性能敏感的Next.js项目极度友好。 仓库地址：https://github.com/vercel/next.js/tree/canary/.claude plugin/plugins/cache components/skills/cache components 安装命令： 二、代码质量 & 自动审查 🔍 frontend code review Dify官方出品的前端专属代码审查工具，专注.ts/.tsx/.js文件。 会自动扫描代码问题，并按严重程度分级：哪些必须改、哪些建议优化，同时精确标出文件和行号，不用自己逐行盯，提PR前自检非常好用。 仓库地址：https://github.com/langgenius/dify/tree/main/.agents/skills/frontend code review 安装命令： 🧪 code reviewer Google Gemini CLI官方提供的通用代码审查技能，审查更全面、更严格。 支持本地变更检查和远程PR扫描，从代码正确性、可维护性、规范一致性多个维度把关，适合团队协作中提升整体代码质量。 仓库地址：https://github.com/google gemini/gemini cli/tree/main/.gemini/skills/code reviewer 安装命令： 三、测试 & 工程化提效 🤖 webapp testing Anthropic官方的前端自动化测试技能，基于Playwright驱动。 可以自动模拟页面操作流程，跑完核心交互逻辑，同时截图、捕获控制台日志，帮你快速发现UI和交互bug，省去大量重复手动点测的时间。 仓库地址：https://github.com/anthropics/skills/tree/main/skills/webapp testing 安装命令： ✨ fix React官方内部使用的代码格式化与Lint修复工具。 自动跑Prettier统一风格，再通过lint检查深层问题，避免因为格式或规范问题在CI阶段被打回，堪称提交代码前的“保险步骤”。 仓库地址：https://github.com/facebook/react/tree/main/.claude/skills/fix 安装命令： 📝 pr creator Google Gemini官方的PR自动生成工具，专治PR写得乱、不规范。 按照项目模板自动填充修改内容、改动原因、影响范围等信息，顺带完成基础检查，让你的PR更专业、更少被打回修改。 仓库地址：https://github.com/google gemini/gemini cli/tree/main/.gemini/skills/pr creator 安装命令： 四、文档 & 工具搜索 📖 update docs Next.js官方自用的文档自动更新工具。 根据代码改动自动对比差异，同步更新对应文档，为新功能生成说明，解决代码一直在更、文档永远滞后的痛点，让项目文档保持最新。 仓库地址：https://github.com/vercel/next.js/tree/canary/.claude plugin/plugins/update docs 安装命令： 🔎 find skills 一个专门用来找Agent技能的“搜索引擎”。 你只需要描述你想实现的需求，它就会自动检索各类仓库，返回匹配的技能、安装命令和相关链接，不用再到处翻仓库找工具。 仓库地址：https://github.com/vercel labs/skills/tree/main/skills/find skills 安装命令：",
+      "readingTime": 7,
       "related": [
         {
-          "id": "notes/architecture/对话式知识库接入设想",
-          "title": "对话式知识库接入设想",
-          "url": "/notes/architecture/对话式知识库接入设想"
+          "id": "architecture-生产ai权限与发布控制设计",
+          "title": "生产 AI 权限与发布控制设计",
+          "url": "/notes/architecture/生产AI权限与发布控制设计"
         },
         {
-          "id": "notes/architecture/服务器直部署与运行时配置",
+          "id": "architecture-服务器直部署与运行时配置",
           "title": "服务器直部署与运行时配置",
           "url": "/notes/architecture/服务器直部署与运行时配置"
         },
         {
-          "id": "notes/architecture/生产AI权限与发布控制设计",
-          "title": "生产 AI 权限与发布控制设计",
-          "url": "/notes/architecture/生产AI权限与发布控制设计"
+          "id": "inbox-project-overview",
+          "title": "项目总览",
+          "url": "/notes/inbox/project-overview"
         }
       ]
-    },
-    {
-      "id": "README",
-      "title": "lcc_blog",
-      "summary": "这是一个基于   的个人知识库项目。",
-      "tags": [],
-      "aliases": [],
-      "headings": [
-        "后端现状（2026-04）",
-        "运行与排查（AI 控制台）",
-        "项目目标",
-        "当前已实现",
-        "1. Markdown-first 知识库",
-        "2. docs.json 驱动目录结构",
-        "3. 低 token 检索链路",
-        "4. AI 驱动的结构化写入",
-        "5. 运行时配置、登录与权限控制",
-        "5. 网页导入",
-        "当前命令",
-        "当前目录约定",
-        "部署方式",
-        "我们的核心需求整理",
-        "A. 知识库能力",
-        "B. AI 驱动",
-        "C. 可持续维护",
-        "D. 站内控制台体验",
-        "当前界面需求",
-        "1. Header 入口",
-        "2. 页面布局",
-        "3. AI 工作区结构",
-        "4. 权限要求",
-        "5. 当前已接入的 AI 动作",
-        "当前阶段判断",
-        "接下来优先级",
-        "P1. 收敛站内 AI 工作区 UI",
-        "P2. 打通 super_admin 用户管理",
-        "P3. 完成受控 AI 对话流",
-        "本轮已落地",
-        "新对话续接建议",
-        "P4. 发布流程彻底两阶段化",
-        "P5. 复用 skills 与 MCP",
-        "当前结论"
-      ],
-      "url": "/README",
-      "relativePath": "README.md",
-      "category": "legacy",
-      "createdAt": "2026-04-09T01:27:50.396Z",
-      "updatedAt": "2026-04-13T07:51:07.490Z",
-      "contentPreview": "lcc_blog\n这是一个基于   的个人知识库项目。  \n项目目标不是单纯做博客，而是把个人笔记、外部资料整理、AI 检索和后续的站内智能助手整合成一个可持续演进的知识系统。\n后端现状（2026-04）\n后端服务已迁移为  （目录： ）\n运行时数据已落到  （文件： ）\n现有 API 保持   路径兼容，便于前端继续调用\n仍保留为知识库动作执行层，NestJS 负责鉴权、会话、运行时配置与编排\n运行与排查（AI 控制台）\n启动： （前端+后端）或  （仅后端）\n健康检查： \n服务日志： （包含   和   分阶段耗时）\n若“发起请求后无响应”，优先检查",
-      "related": []
     }
   ]
 }

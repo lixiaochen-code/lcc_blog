@@ -4,7 +4,7 @@ import path from "node:path";
 import crypto from "node:crypto";
 import fs from "node:fs";
 import { ProxyAgent } from "undici";
-import { ensureDir, readJson, writeJson } from "../kb/shared.mjs";
+import { ensureDir, readJson, readProjectEnv, writeJson } from "../kb/shared.mjs";
 
 const PORT = Number(process.env.AI_DEV_PORT || 3030);
 const projectRoot = process.cwd();
@@ -28,7 +28,8 @@ function normalizeProxyUrl(value) {
 }
 
 function getProxyUrl() {
-  return normalizeProxyUrl(process.env.AI_URL_PROXY);
+  const env = readProjectEnv();
+  return normalizeProxyUrl(env.proxy_url || env.PROXY_URL || env.AI_URL_PROXY);
 }
 
 const actionPermissions = {
@@ -90,6 +91,7 @@ function runNodeScript(relativeScriptPath, args = []) {
   const result = spawnSync(process.execPath, [path.join(projectRoot, relativeScriptPath), ...args], {
     cwd: projectRoot,
     encoding: "utf8",
+    env: readProjectEnv(),
   });
 
   const stdout = String(result.stdout || "").trim();

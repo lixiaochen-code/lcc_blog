@@ -1,34 +1,19 @@
-import { getAllNotes, searchNotes } from "./shared.mjs";
+import { buildAnswerContext, loadKnowledgeBase, parseArgs, searchKnowledgeBase } from "./core.mjs";
 
-const argv = process.argv.slice(2);
-const query = argv.join(" ").trim();
+const args = parseArgs(process.argv.slice(2));
+const query = String(args.query || args.q || args._.join(" ") || "").trim();
+const limit = Number(args.limit || 4);
+const base = loadKnowledgeBase();
 
-if (!query) {
-  console.error("Usage: pnpm kb:context <query>");
+if (!base) {
+  console.error("knowledge-base.json 不存在，请先运行 pnpm kb:build");
   process.exit(1);
 }
 
-const notes = getAllNotes();
-const results = searchNotes(notes, query, 5).map((note) => ({
-  title: note.title,
-  path: note.relativePath,
-  url: note.url,
-  summary: note.summary,
-  tags: note.tags,
-  headings: note.headings.slice(0, 6),
-  excerpt: note.snippet,
-  updatedAt: note.updatedAt,
-  score: note.score,
-}));
+if (!query) {
+  console.error("请提供检索词，例如：pnpm kb:context Vite 插件");
+  process.exit(1);
+}
 
-console.log(
-  JSON.stringify(
-    {
-      query,
-      strategy: "keyword-first retrieval with compact note summaries",
-      results,
-    },
-    null,
-    2
-  )
-);
+const matches = searchKnowledgeBase(base, query, limit);
+process.stdout.write(`${buildAnswerContext(query, matches)}\n`);

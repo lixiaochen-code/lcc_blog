@@ -6,9 +6,11 @@ export const projectRoot = process.cwd();
 export const notesDir = path.join(projectRoot, "notes");
 export const dataDir = path.join(projectRoot, "data");
 export const generatedDir = path.join(projectRoot, ".vitepress", "generated");
+export const projectEnvPath = path.join(projectRoot, ".env");
 
 const EXCLUDED_DIRS = new Set(["node_modules", ".git", ".vitepress", "scripts", "data", "skills"]);
 const EXCLUDED_ROOT_FILES = new Set(["index.md"]);
+let cachedProjectEnv = null;
 
 export function ensureDir(dirPath) {
   fs.mkdirSync(dirPath, { recursive: true });
@@ -33,6 +35,60 @@ export function readJson(filePath, fallback = null) {
 
 export function writeJson(filePath, value) {
   writeText(filePath, `${JSON.stringify(value, null, 2)}\n`);
+}
+
+function parseDotEnvValue(rawValue) {
+  const trimmed = String(rawValue || "").trim();
+  if (!trimmed) {
+    return "";
+  }
+
+  const match = trimmed.match(/^(['"])([\s\S]*)\1$/);
+  if (match) {
+    return match[2]
+      .replace(/\\n/g, "\n")
+      .replace(/\\r/g, "\r")
+      .replace(/\\t/g, "\t");
+  }
+
+  return trimmed;
+}
+
+export function readProjectEnv() {
+  if (cachedProjectEnv) {
+    return cachedProjectEnv;
+  }
+
+  const fileEnv = {};
+  if (fs.existsSync(projectEnvPath)) {
+    const raw = fs.readFileSync(projectEnvPath, "utf8");
+    for (const line of raw.split(/\r?\n/)) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith("#")) {
+        continue;
+      }
+
+      const normalized = trimmed.startsWith("export ") ? trimmed.slice(7).trim() : trimmed;
+      const equalIndex = normalized.indexOf("=");
+      if (equalIndex === -1) {
+        continue;
+      }
+
+      const key = normalized.slice(0, equalIndex).trim();
+      if (!key) {
+        continue;
+      }
+
+      const value = normalized.slice(equalIndex + 1);
+      fileEnv[key] = parseDotEnvValue(value);
+    }
+  }
+
+  cachedProjectEnv = {
+    ...fileEnv,
+    ...process.env,
+  };
+  return cachedProjectEnv;
 }
 
 export function runKbBuild() {
