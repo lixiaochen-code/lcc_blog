@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-13T17:17:17.116Z",
+  "generatedAt": "2026-04-14T01:40:05.599Z",
   "site": {
     "title": "小晨的学习知识库",
     "description": "一个重新设计的 Markdown-first 个人知识系统。"
@@ -180,7 +180,11 @@
       "slug": "对话式知识库接入设想",
       "title": "对话式知识库接入设想",
       "summary": "记录如何把用户对话收束成稳定的知识库动作，以便在 Codex 或 OpenCode 中完成新增、追加与检索。",
-      "tags": ["知识库", "对话", "AI"],
+      "tags": [
+        "知识库",
+        "对话",
+        "AI"
+      ],
       "aliases": [],
       "category": "architecture",
       "folder": "architecture",
@@ -190,7 +194,10 @@
       "updatedAt": "2026-04-08T02:13:46.534Z",
       "relativePath": "notes/architecture/对话式知识库接入设想.md",
       "url": "/notes/architecture/对话式知识库接入设想",
-      "headings": ["对话式知识库接入设想", "接入建议"],
+      "headings": [
+        "对话式知识库接入设想",
+        "接入建议"
+      ],
       "excerpt": "对话式知识库接入设想 目标是把自然语言请求收束成 add、append、update meta、search、context 等动作，并保持 Markdown 为唯一真源。 接入建议 优先让对话层负责意图识别，再把结构化参数交给本地脚本执行，这样更容易控制 token 和修改边界。",
       "plainText": "对话式知识库接入设想 目标是把自然语言请求收束成 add、append、update meta、search、context 等动作，并保持 Markdown 为唯一真源。 接入建议 优先让对话层负责意图识别，再把结构化参数交给本地脚本执行，这样更容易控制 token 和修改边界。",
       "readingTime": 1,
@@ -217,8 +224,16 @@
       "slug": "服务器直部署与运行时配置",
       "title": "服务器直部署与运行时配置",
       "summary": "定义生产 AI 工具如何直接在服务器运行，以及 owner 如何管理 baseUrl、protocol、apiKey 和单一模型。",
-      "tags": ["知识库", "AI", "部署", "配置"],
-      "aliases": ["runtime config", "server direct deploy"],
+      "tags": [
+        "知识库",
+        "AI",
+        "部署",
+        "配置"
+      ],
+      "aliases": [
+        "runtime config",
+        "server direct deploy"
+      ],
       "category": "architecture",
       "folder": "architecture",
       "sectionId": "design",
@@ -267,8 +282,17 @@
       "slug": "生产AI权限与发布控制设计",
       "title": "生产 AI 权限与发布控制设计",
       "summary": "规划生产站点中的 AI 工具如何受控地修改开发环境知识库，并由 owner 决定是否重建和发布生产。",
-      "tags": ["知识库", "AI", "权限", "发布", "工作流"],
-      "aliases": ["production ai auth", "权限设计"],
+      "tags": [
+        "知识库",
+        "AI",
+        "权限",
+        "发布",
+        "工作流"
+      ],
+      "aliases": [
+        "production ai auth",
+        "权限设计"
+      ],
       "category": "architecture",
       "folder": "architecture",
       "sectionId": "design",
@@ -317,8 +341,16 @@
       "slug": "owner授权与用户访问控制",
       "title": "Owner 授权与用户访问控制",
       "summary": "定义 owner 如何授权普通用户使用生产 AI，并控制其知识库权限、运行时权限和 token 配额。",
-      "tags": ["知识库", "AI", "权限", "用户"],
-      "aliases": ["user access control", "owner approval"],
+      "tags": [
+        "知识库",
+        "AI",
+        "权限",
+        "用户"
+      ],
+      "aliases": [
+        "user access control",
+        "owner approval"
+      ],
       "category": "architecture",
       "folder": "architecture",
       "sectionId": "design",
@@ -366,8 +398,15 @@
       "slug": "vite学习笔记",
       "title": "Vite 学习笔记",
       "summary": "整理 Vite 中常见的 CSS 配置、路径解析、打包配置与插件示例，方便后续按主题检索。",
-      "tags": ["Vite", "构建工具", "前端工程化"],
-      "aliases": ["vite note", "vite 配置整理"],
+      "tags": [
+        "Vite",
+        "构建工具",
+        "前端工程化"
+      ],
+      "aliases": [
+        "vite note",
+        "vite 配置整理"
+      ],
       "category": "frontend",
       "folder": "frontend",
       "sectionId": "frontend",
@@ -426,7 +465,9 @@
       "updatedAt": "2026-04-08T05:38:01.797Z",
       "relativePath": "notes/inbox/dev-flow-owner-note.md",
       "url": "/notes/inbox/dev-flow-owner-note",
-      "headings": ["dev-flow-owner-note"],
+      "headings": [
+        "dev-flow-owner-note"
+      ],
       "excerpt": "dev flow owner note This note is created from the local AI dev workflow.",
       "plainText": "dev flow owner note This note is created from the local AI dev workflow.",
       "readingTime": 1,
@@ -453,8 +494,16 @@
       "slug": "getting-started",
       "title": "知识库开始使用",
       "summary": "通过开发工作台更新的摘要。",
-      "tags": ["知识库", "工作流", "Codex", "OpenCode"],
-      "aliases": ["kb guide", "知识库说明"],
+      "tags": [
+        "知识库",
+        "工作流",
+        "Codex",
+        "OpenCode"
+      ],
+      "aliases": [
+        "kb guide",
+        "知识库说明"
+      ],
       "category": "inbox",
       "folder": "inbox",
       "sectionId": "start",
@@ -498,8 +547,18 @@
       "slug": "project-overview",
       "title": "项目总览",
       "summary": "说明这个项目为什么存在、现在的重构方向是什么，以及它最终想提供怎样的知识库体验。",
-      "tags": ["知识库", "项目概览", "AI", "检索", "Markdown"],
-      "aliases": ["project overview", "项目介绍", "这个项目是做什么的"],
+      "tags": [
+        "知识库",
+        "项目概览",
+        "AI",
+        "检索",
+        "Markdown"
+      ],
+      "aliases": [
+        "project overview",
+        "项目介绍",
+        "这个项目是做什么的"
+      ],
       "category": "inbox",
       "folder": "inbox",
       "sectionId": "start",
@@ -542,8 +601,16 @@
       "slug": "智能检索约束",
       "title": "智能检索约束",
       "summary": "说明为什么 AI 上层应该先取紧凑上下文，再决定是否扩大读取范围。",
-      "tags": ["知识库", "检索", "低token", "工作流"],
-      "aliases": ["compact-retrieval", "智能召回"],
+      "tags": [
+        "知识库",
+        "检索",
+        "低token",
+        "工作流"
+      ],
+      "aliases": [
+        "compact-retrieval",
+        "智能召回"
+      ],
       "category": "retrieval",
       "folder": "retrieval",
       "sectionId": "retrieval",
@@ -552,7 +619,9 @@
       "updatedAt": "2026-04-08T02:22:10.283Z",
       "relativePath": "notes/retrieval/智能检索约束.md",
       "url": "/notes/retrieval/智能检索约束",
-      "headings": ["智能检索约束"],
+      "headings": [
+        "智能检索约束"
+      ],
       "excerpt": "智能检索约束 检索阶段优先返回标题、摘要、标签、命中片段和路径，只有在结果不足时才读取单篇原文。",
       "plainText": "智能检索约束 检索阶段优先返回标题、摘要、标签、命中片段和路径，只有在结果不足时才读取单篇原文。",
       "readingTime": 1,
@@ -579,8 +648,16 @@
       "slug": "开发AI工作台",
       "title": "AI 控制台接入说明",
       "summary": "说明站点内的 AI 控制台现在已从正文页移到 header 入口，并以独立右侧工作区展示。",
-      "tags": ["AI", "控制台", "Dev", "权限"],
-      "aliases": ["dev ai console", "dev ai workbench"],
+      "tags": [
+        "AI",
+        "控制台",
+        "Dev",
+        "权限"
+      ],
+      "aliases": [
+        "dev ai console",
+        "dev ai workbench"
+      ],
       "category": "tools",
       "folder": "tools",
       "sectionId": "tools",
@@ -589,7 +666,9 @@
       "updatedAt": "2026-04-08T00:00:00.000Z",
       "relativePath": "notes/tools/开发AI工作台.md",
       "url": "/notes/tools/开发AI工作台",
-      "headings": ["AI 控制台接入说明"],
+      "headings": [
+        "AI 控制台接入说明"
+      ],
       "excerpt": "AI 控制台接入说明 AI 控制台现在不再作为正文页嵌在内容区里，而是： 入口放在 header 点击后展开独立右侧工作区 工作区内部使用纵向 Tab 与页面正文分栏展示，不再混进文档内容 当前已接入的动作： retrieve add append update meta delete inspect url ingest url 说明： 读 已接入 增…",
       "plainText": "AI 控制台接入说明 AI 控制台现在不再作为正文页嵌在内容区里，而是： 入口放在 header 点击后展开独立右侧工作区 工作区内部使用纵向 Tab 与页面正文分栏展示，不再混进文档内容 当前已接入的动作： retrieve add append update meta delete inspect url ingest url 说明： 读 已接入 增 已接入 改 已接入 删 现在也已接入 真正的自然语言模型编排还没接到这个 dev 页面里，当前是“对话式受控动作台”",
       "readingTime": 1,
@@ -616,7 +695,12 @@
       "slug": "awesome-apis-中文资源总结",
       "title": "Awesome APIs 中文资源总结",
       "summary": "Awesome APIs 中文资源总结 这是一个名为“Awesome APIs”的GitHub仓库的中文README文件，旨在为开发者收集和整理各类优秀的API资源。 核心目的 ： 收集和分类“非常好的API”，方便开发者查找和集成。 鼓…",
-      "tags": ["api", "开发资源", "github", "awesome-list"],
+      "tags": [
+        "api",
+        "开发资源",
+        "github",
+        "awesome-list"
+      ],
       "aliases": [],
       "category": "tools",
       "folder": "tools",
@@ -626,7 +710,9 @@
       "updatedAt": "2026-04-08T16:41:44.792Z",
       "relativePath": "notes/tools/awesome-apis-中文资源总结.md",
       "url": "/notes/tools/awesome-apis-中文资源总结",
-      "headings": ["Awesome APIs 中文资源总结"],
+      "headings": [
+        "Awesome APIs 中文资源总结"
+      ],
       "excerpt": "Awesome APIs 中文资源总结 这是一个名为“Awesome APIs”的GitHub仓库的中文README文件，旨在为开发者收集和整理各类优秀的API资源。 核心目的 ： 收集和分类“非常好的API”，方便开发者查找和集成。 鼓励社区参与（Star、Fork、提交PR）。 内容结构 ： 庞大的分类目录，涵盖数十个领域，每个类别下列举相关API及其…",
       "plainText": "Awesome APIs 中文资源总结 这是一个名为“Awesome APIs”的GitHub仓库的中文README文件，旨在为开发者收集和整理各类优秀的API资源。 核心目的 ： 收集和分类“非常好的API”，方便开发者查找和集成。 鼓励社区参与（Star、Fork、提交PR）。 内容结构 ： 庞大的分类目录，涵盖数十个领域，每个类别下列举相关API及其简要说明。 主要涵盖领域 ： 1. 开发与平台 ：GitHub、GitLab、云服务（阿里云、腾讯云等）、开发工具（CircleCI、TravisCI）。 2. 社交媒体与通信 ：Facebook、Twitter、微博、Slack、Telegram。 3. 多媒体与内容 ：音乐（Spotify、SoundCloud）、视频（YouTube、Vimeo）、图像（Unsplash、Imgur）、新闻（纽约时报、HackerNews）。 4. 生活与商业服务 ：地图（高德、Google Maps）、支付（PayPal）、外卖（饿了么、美团）、旅游（携程、去哪儿）、天气（彩云天气、和风天气）。 5. 新兴技术 ：物联网（Philips Hue）、机器学习（Google Cloud Prediction、IBM Watson）、人工智能服务（语音/图像分析）。 6. 其他垂直领域 ：二次元、物流、设计等。 额外资源 ： 列出了“百度API STORE”、“聚合数据”等综合性API资源平台。 总结 ： 该文档是一个面向开发者的、按领域分类的API资源大全，旨在帮助开发者快速查找和集成所需的服务接口。 来源URL ：https://github.com/TonnyL/Awesome APIs/blob/master/README zh.md",
       "readingTime": 2,
@@ -661,7 +747,10 @@
         "Gemini",
         "Codex"
       ],
-      "aliases": ["CLIProxyAPI", "CLI Proxy API"],
+      "aliases": [
+        "CLIProxyAPI",
+        "CLI Proxy API"
+      ],
       "category": "tools",
       "folder": "tools",
       "sectionId": "tools",
@@ -708,7 +797,11 @@
       "slug": "杀疯了-前端最强-10-个-ai-skills-效率提升500",
       "title": "杀疯了！前端最强 10 个 AI Skills ！效率提升500%！",
       "summary": "给前端同学整理了10个超实用的Agent开发技能，覆盖界面开发、项目搭建、代码质检、自动化测试、文档维护等全流程\\n一、界面开发 & 项目搭建🎨 frontend-design来自Anthropic官方的前端界面构建工具，主打快速产出有设计感的页面。 不管是从零封装组件，还是对现有",
-      "tags": ["微信", "AI", "前端"],
+      "tags": [
+        "微信",
+        "AI",
+        "前端"
+      ],
       "aliases": [],
       "category": "web-clips",
       "folder": "web-clips",
