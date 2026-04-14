@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Document {
+  id          String            @id @default(cuid())
+  slug        String            @unique
+  title       String
+  summary     String            @db.Text
+  content     String            @db.LongText
+  format      DocumentFormat    @default(mdx)
+  status      DocumentStatus    @default(draft)
+  visibility  DocumentVisibility @default(public)
+  sourceType  DocumentSourceType @default(human)
+  createdBy   String
+  updatedBy   String
+  publishedAt DateTime?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  versions    DocumentVersion[]
+}
+
+model DocumentVersion {
+  id              String   @id @default(cuid())
+  documentId      String
+  versionNo       Int
+  titleSnapshot   String
+  summarySnapshot String   @db.Text
+  contentSnapshot String   @db.LongText
+  createdBy       String
+  createdAt       DateTime @default(now())
+  document        Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([documentId, versionNo])
+}
+
+enum DocumentFormat {
+  md
+  mdx
+}
+
+enum DocumentStatus {
+  draft
+  review
+  published
+  archived
+}
+
+enum DocumentVisibility {
+  public
+  internal
+  private
+}
+
+enum DocumentSourceType {
+  human
+  ai
+  import
+  sync
+}
