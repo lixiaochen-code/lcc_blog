@@ -70,14 +70,65 @@ const defaultStore: DocumentStore = {
       content:
         "这是首版文档内容样例，用于支撑 change-003 的 CRUD、发布和版本快照流程。",
       format: "mdx",
-      status: "draft",
+      status: "published",
       visibility: "public",
       sourceType: "human",
       createdBy: "system",
       updatedBy: "system",
-      publishedAt: null,
+      publishedAt: new Date("2026-04-15T00:00:00.000Z").toISOString(),
       createdAt: new Date("2026-04-15T00:00:00.000Z").toISOString(),
       updatedAt: new Date("2026-04-15T00:00:00.000Z").toISOString()
+    },
+    {
+      id: "doc_seed_2",
+      slug: "content-governance",
+      title: "内容治理模型",
+      summary: "说明草稿、审批、发布与回滚约束，支撑知识库治理流程。",
+      content:
+        "内容治理要求 AI 写入先进入草稿或变更集，已发布内容不能被直接覆盖。全文检索需要先覆盖标题、摘要和正文三类字段。",
+      format: "mdx",
+      status: "published",
+      visibility: "internal",
+      sourceType: "human",
+      createdBy: "system",
+      updatedBy: "system",
+      publishedAt: new Date("2026-04-15T00:10:00.000Z").toISOString(),
+      createdAt: new Date("2026-04-15T00:10:00.000Z").toISOString(),
+      updatedAt: new Date("2026-04-15T00:10:00.000Z").toISOString()
+    },
+    {
+      id: "doc_seed_3",
+      slug: "admin-search-playbook",
+      title: "后台搜索运维手册",
+      summary: "记录搜索索引维护、相关度调优和已知限制。",
+      content:
+        "该手册仅对管理员开放，包含 MySQL FULLTEXT 索引维护建议、中文分词限制以及回退策略。",
+      format: "mdx",
+      status: "review",
+      visibility: "private",
+      sourceType: "human",
+      createdBy: "system",
+      updatedBy: "system",
+      publishedAt: null,
+      createdAt: new Date("2026-04-15T00:20:00.000Z").toISOString(),
+      updatedAt: new Date("2026-04-15T00:20:00.000Z").toISOString()
+    },
+    {
+      id: "doc_seed_4",
+      slug: "search-retrieval-basics",
+      title: "检索基础能力",
+      summary: "解释关键词搜索、分页、摘录与权限过滤之间的关系。",
+      content:
+        "搜索能力是 AI 检索前的基础召回层。首版以关键词命中、分页与 excerpt 生成为主，不实现语义检索。",
+      format: "mdx",
+      status: "published",
+      visibility: "public",
+      sourceType: "human",
+      createdBy: "system",
+      updatedBy: "system",
+      publishedAt: new Date("2026-04-15T00:30:00.000Z").toISOString(),
+      createdAt: new Date("2026-04-15T00:30:00.000Z").toISOString(),
+      updatedAt: new Date("2026-04-15T00:30:00.000Z").toISOString()
     }
   ],
   versions: []

@@ -21,6 +21,10 @@
       "types": "./dist/documents.d.ts",
       "default": "./dist/documents.js"
     },
+    "./search": {
+      "types": "./dist/search.d.ts",
+      "default": "./dist/search.js"
+    },
     "./sidebars": {
       "types": "./dist/sidebars.d.ts",
       "default": "./dist/sidebars.js"

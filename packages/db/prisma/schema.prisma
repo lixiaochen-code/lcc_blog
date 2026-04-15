@@ -25,6 +25,8 @@ model Document {
   versions    DocumentVersion[]
   categories  DocumentCategory[]
   tags        DocumentTag[]
+
+  @@fulltext([title, summary, content])
 }
 
 model User {
