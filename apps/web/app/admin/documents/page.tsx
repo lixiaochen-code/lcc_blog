@@ -1,8 +1,10 @@
 import Link from "next/link";
 import type { DocumentRecord } from "@lcc-blog/db/documents";
 import { listDocuments } from "../../../lib/documents-client";
+import { requirePermission } from "../../../lib/auth";
 
-export default function AdminDocumentsPage() {
+export default async function AdminDocumentsPage() {
+  await requirePermission("doc.read");
   const documents = listDocuments();
 
   return (

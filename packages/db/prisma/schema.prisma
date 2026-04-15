@@ -23,6 +23,60 @@ model Document {
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
   versions    DocumentVersion[]
+  categories  DocumentCategory[]
+  tags        DocumentTag[]
+}
+
+model User {
+  id            String     @id @default(cuid())
+  email         String     @unique
+  name          String?
+  passwordHash  String
+  status        UserStatus @default(active)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  roles         UserRole[]
+}
+
+model Role {
+  id          String           @id @default(cuid())
+  code        String           @unique
+  name        String
+  description String?          @db.Text
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  users       UserRole[]
+  permissions RolePermission[]
+}
+
+model Permission {
+  id          String           @id @default(cuid())
+  code        String           @unique
+  name        String
+  description String?          @db.Text
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  roles       RolePermission[]
+}
+
+model UserRole {
+  userId     String
+  roleId     String
+  assignedAt DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role       Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  assignedAt   DateTime   @default(now())
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
 }
 
 model DocumentVersion {
@@ -62,4 +116,81 @@ enum DocumentSourceType {
   ai
   import
   sync
+}
+
+model Category {
+  id          String              @id @default(cuid())
+  slug        String              @unique
+  name        String
+  description String?             @db.Text
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  documents   DocumentCategory[]
+}
+
+model Tag {
+  id        String        @id @default(cuid())
+  slug      String        @unique
+  name      String
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  documents DocumentTag[]
+}
+
+model DocumentCategory {
+  documentId String
+  categoryId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([documentId, categoryId])
+}
+
+model DocumentTag {
+  documentId String
+  tagId      String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  tag        Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([documentId, tagId])
+}
+
+model Sidebar {
+  id          String        @id @default(cuid())
+  slug        String        @unique
+  name        String
+  description String?       @db.Text
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  items       SidebarItem[]
+}
+
+model SidebarItem {
+  id         String           @id @default(cuid())
+  sidebarId  String
+  parentId   String?
+  type       SidebarItemType
+  label      String
+  documentId String?
+  categoryId String?
+  link       String?
+  order      Int              @default(0)
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+  sidebar    Sidebar          @relation(fields: [sidebarId], references: [id], onDelete: Cascade)
+  parent     SidebarItem?     @relation("SidebarItemChildren", fields: [parentId], references: [id], onDelete: Cascade)
+  children   SidebarItem[]    @relation("SidebarItemChildren")
+
+  @@index([sidebarId, order])
+}
+
+enum SidebarItemType {
+  document
+  category
+  link
+}
+
+enum UserStatus {
+  active
+  disabled
 }

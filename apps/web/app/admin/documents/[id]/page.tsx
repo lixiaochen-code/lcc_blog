@@ -5,6 +5,7 @@ import {
   getDocumentById,
   getDocumentVersions
 } from "../../../../lib/documents-client";
+import { requirePermission } from "../../../../lib/auth";
 
 interface AdminDocumentDetailPageProps {
   params: Promise<{ id: string }>;
@@ -13,6 +14,7 @@ interface AdminDocumentDetailPageProps {
 export default async function AdminDocumentDetailPage({
   params
 }: AdminDocumentDetailPageProps) {
+  await requirePermission("doc.read");
   const { id } = await params;
   const document = getDocumentById(id);
 

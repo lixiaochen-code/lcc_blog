@@ -1,15 +1,15 @@
-import { documentsRepository } from "@lcc-blog/db/documents";
+import { tagsRepository } from "@lcc-blog/db/tags";
 import { NextResponse } from "next/server";
 import { AuthorizationError, requireApiPermission } from "../../../lib/auth";
 
 export async function GET() {
   try {
-    await requireApiPermission("doc.read");
-    return NextResponse.json({ items: documentsRepository.listDocuments() });
+    await requireApiPermission("tag.read");
+    return NextResponse.json({ items: tagsRepository.listTags() });
   } catch (error) {
     const status = error instanceof AuthorizationError ? error.status : 500;
     const message =
-      error instanceof Error ? error.message : "documents request failed";
+      error instanceof Error ? error.message : "tags request failed";
 
     return NextResponse.json({ message }, { status });
   }
@@ -17,21 +17,15 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const session = await requireApiPermission("doc.create");
+    await requireApiPermission("tag.manage");
     const body = (await request.json()) as {
       slug: string;
-      title: string;
-      summary: string;
-      content: string;
-      createdBy?: string;
+      name: string;
     };
 
-    const created = documentsRepository.createDocument({
+    const created = tagsRepository.createTag({
       slug: body.slug,
-      title: body.title,
-      summary: body.summary,
-      content: body.content,
-      createdBy: body.createdBy ?? session.user.email ?? "system"
+      name: body.name
     });
 
     return NextResponse.json(created, { status: 201 });

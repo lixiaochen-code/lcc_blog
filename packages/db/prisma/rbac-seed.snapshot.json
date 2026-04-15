@@ -1,0 +1,558 @@
+{
+  "users": [
+    {
+      "id": "user_admin_seed",
+      "email": "admin@example.com",
+      "name": "Admin",
+      "passwordHash": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9",
+      "status": "active",
+      "createdAt": "2026-04-15T00:00:00.000Z",
+      "updatedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "id": "user_editor_seed",
+      "email": "user@example.com",
+      "name": "User",
+      "passwordHash": "e606e38b0d8c19b24cf0ee3808183162ea7cd63ff7912dbb22b5e803286b4446",
+      "status": "active",
+      "createdAt": "2026-04-15T00:00:00.000Z",
+      "updatedAt": "2026-04-15T00:00:00.000Z"
+    }
+  ],
+  "roles": [
+    {
+      "id": "role_guest",
+      "code": "guest",
+      "name": "Guest",
+      "description": "guest role",
+      "createdAt": "2026-04-15T00:00:00.000Z",
+      "updatedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "id": "role_user",
+      "code": "user",
+      "name": "User",
+      "description": "user role",
+      "createdAt": "2026-04-15T00:00:00.000Z",
+      "updatedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "id": "role_admin",
+      "code": "admin",
+      "name": "Admin",
+      "description": "admin role",
+      "createdAt": "2026-04-15T00:00:00.000Z",
+      "updatedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "id": "role_super_admin",
+      "code": "super_admin",
+      "name": "Super Admin",
+      "description": "super_admin role",
+      "createdAt": "2026-04-15T00:00:00.000Z",
+      "updatedAt": "2026-04-15T00:00:00.000Z"
+    }
+  ],
+  "permissions": [
+    {
+      "id": "perm_doc_read",
+      "code": "doc.read",
+      "name": "Doc Read",
+      "description": "doc.read permission",
+      "createdAt": "2026-04-15T00:00:00.000Z",
+      "updatedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "id": "perm_doc_search",
+      "code": "doc.search",
+      "name": "Doc Search",
+      "description": "doc.search permission",
+      "createdAt": "2026-04-15T00:00:00.000Z",
+      "updatedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "id": "perm_doc_create",
+      "code": "doc.create",
+      "name": "Doc Create",
+      "description": "doc.create permission",
+      "createdAt": "2026-04-15T00:00:00.000Z",
+      "updatedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "id": "perm_doc_update",
+      "code": "doc.update",
+      "name": "Doc Update",
+      "description": "doc.update permission",
+      "createdAt": "2026-04-15T00:00:00.000Z",
+      "updatedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "id": "perm_doc_delete",
+      "code": "doc.delete",
+      "name": "Doc Delete",
+      "description": "doc.delete permission",
+      "createdAt": "2026-04-15T00:00:00.000Z",
+      "updatedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "id": "perm_doc_publish",
+      "code": "doc.publish",
+      "name": "Doc Publish",
+      "description": "doc.publish permission",
+      "createdAt": "2026-04-15T00:00:00.000Z",
+      "updatedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "id": "perm_doc_archive",
+      "code": "doc.archive",
+      "name": "Doc Archive",
+      "description": "doc.archive permission",
+      "createdAt": "2026-04-15T00:00:00.000Z",
+      "updatedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "id": "perm_doc_rollback",
+      "code": "doc.rollback",
+      "name": "Doc Rollback",
+      "description": "doc.rollback permission",
+      "createdAt": "2026-04-15T00:00:00.000Z",
+      "updatedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "id": "perm_category_read",
+      "code": "category.read",
+      "name": "Category Read",
+      "description": "category.read permission",
+      "createdAt": "2026-04-15T00:00:00.000Z",
+      "updatedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "id": "perm_category_manage",
+      "code": "category.manage",
+      "name": "Category Manage",
+      "description": "category.manage permission",
+      "createdAt": "2026-04-15T00:00:00.000Z",
+      "updatedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "id": "perm_tag_read",
+      "code": "tag.read",
+      "name": "Tag Read",
+      "description": "tag.read permission",
+      "createdAt": "2026-04-15T00:00:00.000Z",
+      "updatedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "id": "perm_tag_manage",
+      "code": "tag.manage",
+      "name": "Tag Manage",
+      "description": "tag.manage permission",
+      "createdAt": "2026-04-15T00:00:00.000Z",
+      "updatedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "id": "perm_sidebar_read",
+      "code": "sidebar.read",
+      "name": "Sidebar Read",
+      "description": "sidebar.read permission",
+      "createdAt": "2026-04-15T00:00:00.000Z",
+      "updatedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "id": "perm_sidebar_update",
+      "code": "sidebar.update",
+      "name": "Sidebar Update",
+      "description": "sidebar.update permission",
+      "createdAt": "2026-04-15T00:00:00.000Z",
+      "updatedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "id": "perm_ai_search",
+      "code": "ai.search",
+      "name": "Ai Search",
+      "description": "ai.search permission",
+      "createdAt": "2026-04-15T00:00:00.000Z",
+      "updatedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "id": "perm_ai_ask",
+      "code": "ai.ask",
+      "name": "Ai Ask",
+      "description": "ai.ask permission",
+      "createdAt": "2026-04-15T00:00:00.000Z",
+      "updatedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "id": "perm_ai_summarize",
+      "code": "ai.summarize",
+      "name": "Ai Summarize",
+      "description": "ai.summarize permission",
+      "createdAt": "2026-04-15T00:00:00.000Z",
+      "updatedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "id": "perm_ai_write",
+      "code": "ai.write",
+      "name": "Ai Write",
+      "description": "ai.write permission",
+      "createdAt": "2026-04-15T00:00:00.000Z",
+      "updatedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "id": "perm_ai_organize",
+      "code": "ai.organize",
+      "name": "Ai Organize",
+      "description": "ai.organize permission",
+      "createdAt": "2026-04-15T00:00:00.000Z",
+      "updatedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "id": "perm_ai_delete",
+      "code": "ai.delete",
+      "name": "Ai Delete",
+      "description": "ai.delete permission",
+      "createdAt": "2026-04-15T00:00:00.000Z",
+      "updatedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "id": "perm_ai_sync",
+      "code": "ai.sync",
+      "name": "Ai Sync",
+      "description": "ai.sync permission",
+      "createdAt": "2026-04-15T00:00:00.000Z",
+      "updatedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "id": "perm_user_manage",
+      "code": "user.manage",
+      "name": "User Manage",
+      "description": "user.manage permission",
+      "createdAt": "2026-04-15T00:00:00.000Z",
+      "updatedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "id": "perm_role_manage",
+      "code": "role.manage",
+      "name": "Role Manage",
+      "description": "role.manage permission",
+      "createdAt": "2026-04-15T00:00:00.000Z",
+      "updatedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "id": "perm_provider_manage",
+      "code": "provider.manage",
+      "name": "Provider Manage",
+      "description": "provider.manage permission",
+      "createdAt": "2026-04-15T00:00:00.000Z",
+      "updatedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "id": "perm_mcp_manage",
+      "code": "mcp.manage",
+      "name": "Mcp Manage",
+      "description": "mcp.manage permission",
+      "createdAt": "2026-04-15T00:00:00.000Z",
+      "updatedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "id": "perm_audit_read",
+      "code": "audit.read",
+      "name": "Audit Read",
+      "description": "audit.read permission",
+      "createdAt": "2026-04-15T00:00:00.000Z",
+      "updatedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "id": "perm_system_manage",
+      "code": "system.manage",
+      "name": "System Manage",
+      "description": "system.manage permission",
+      "createdAt": "2026-04-15T00:00:00.000Z",
+      "updatedAt": "2026-04-15T00:00:00.000Z"
+    }
+  ],
+  "userRoles": [
+    {
+      "userId": "user_admin_seed",
+      "roleId": "role_admin",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "userId": "user_editor_seed",
+      "roleId": "role_user",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    }
+  ],
+  "rolePermissions": [
+    {
+      "roleId": "role_user",
+      "permissionId": "perm_doc_read",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "roleId": "role_user",
+      "permissionId": "perm_doc_search",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "roleId": "role_user",
+      "permissionId": "perm_category_read",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "roleId": "role_user",
+      "permissionId": "perm_tag_read",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "roleId": "role_user",
+      "permissionId": "perm_sidebar_read",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "roleId": "role_user",
+      "permissionId": "perm_ai_search",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "roleId": "role_user",
+      "permissionId": "perm_ai_ask",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "roleId": "role_user",
+      "permissionId": "perm_ai_summarize",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "roleId": "role_admin",
+      "permissionId": "perm_doc_read",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "roleId": "role_admin",
+      "permissionId": "perm_doc_search",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "roleId": "role_admin",
+      "permissionId": "perm_category_read",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "roleId": "role_admin",
+      "permissionId": "perm_tag_read",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "roleId": "role_admin",
+      "permissionId": "perm_sidebar_read",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "roleId": "role_admin",
+      "permissionId": "perm_ai_search",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "roleId": "role_admin",
+      "permissionId": "perm_ai_ask",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "roleId": "role_admin",
+      "permissionId": "perm_ai_summarize",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "roleId": "role_admin",
+      "permissionId": "perm_doc_create",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "roleId": "role_admin",
+      "permissionId": "perm_doc_update",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "roleId": "role_admin",
+      "permissionId": "perm_doc_delete",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "roleId": "role_admin",
+      "permissionId": "perm_doc_publish",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "roleId": "role_admin",
+      "permissionId": "perm_doc_archive",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "roleId": "role_admin",
+      "permissionId": "perm_doc_rollback",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "roleId": "role_admin",
+      "permissionId": "perm_category_manage",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "roleId": "role_admin",
+      "permissionId": "perm_tag_manage",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "roleId": "role_admin",
+      "permissionId": "perm_sidebar_update",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "roleId": "role_admin",
+      "permissionId": "perm_ai_write",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "roleId": "role_admin",
+      "permissionId": "perm_ai_organize",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "roleId": "role_super_admin",
+      "permissionId": "perm_doc_read",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "roleId": "role_super_admin",
+      "permissionId": "perm_doc_search",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "roleId": "role_super_admin",
+      "permissionId": "perm_doc_create",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "roleId": "role_super_admin",
+      "permissionId": "perm_doc_update",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "roleId": "role_super_admin",
+      "permissionId": "perm_doc_delete",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "roleId": "role_super_admin",
+      "permissionId": "perm_doc_publish",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "roleId": "role_super_admin",
+      "permissionId": "perm_doc_archive",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "roleId": "role_super_admin",
+      "permissionId": "perm_doc_rollback",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "roleId": "role_super_admin",
+      "permissionId": "perm_category_read",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "roleId": "role_super_admin",
+      "permissionId": "perm_category_manage",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "roleId": "role_super_admin",
+      "permissionId": "perm_tag_read",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "roleId": "role_super_admin",
+      "permissionId": "perm_tag_manage",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "roleId": "role_super_admin",
+      "permissionId": "perm_sidebar_read",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "roleId": "role_super_admin",
+      "permissionId": "perm_sidebar_update",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "roleId": "role_super_admin",
+      "permissionId": "perm_ai_search",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "roleId": "role_super_admin",
+      "permissionId": "perm_ai_ask",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "roleId": "role_super_admin",
+      "permissionId": "perm_ai_summarize",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "roleId": "role_super_admin",
+      "permissionId": "perm_ai_write",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "roleId": "role_super_admin",
+      "permissionId": "perm_ai_organize",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "roleId": "role_super_admin",
+      "permissionId": "perm_ai_delete",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "roleId": "role_super_admin",
+      "permissionId": "perm_ai_sync",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "roleId": "role_super_admin",
+      "permissionId": "perm_user_manage",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "roleId": "role_super_admin",
+      "permissionId": "perm_role_manage",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "roleId": "role_super_admin",
+      "permissionId": "perm_provider_manage",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "roleId": "role_super_admin",
+      "permissionId": "perm_mcp_manage",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "roleId": "role_super_admin",
+      "permissionId": "perm_audit_read",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    },
+    {
+      "roleId": "role_super_admin",
+      "permissionId": "perm_system_manage",
+      "assignedAt": "2026-04-15T00:00:00.000Z"
+    }
+  ]
+}

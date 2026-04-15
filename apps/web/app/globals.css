@@ -108,6 +108,64 @@ img {
   box-shadow: var(--shadow);
 }
 
+.admin-shell__intro {
+  padding-bottom: 24px;
+}
+
+.admin-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.admin-nav a {
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255, 253, 248, 0.72);
+  color: var(--text-muted);
+}
+
+.admin-nav a[data-active="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+
+.auth-card {
+  max-width: 480px;
+  margin: 80px auto;
+}
+
+.auth-form {
+  display: grid;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.auth-form label {
+  display: grid;
+  gap: 8px;
+}
+
+.auth-form input {
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: white;
+  color: var(--text);
+}
+
+.auth-error {
+  color: #b42318;
+}
+
+.auth-hint {
+  margin-top: 12px;
+  font-size: 0.9rem;
+}
+
 .page-section {
   padding: 48px 0;
 }

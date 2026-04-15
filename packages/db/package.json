@@ -9,18 +9,39 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./auth": {
+      "types": "./dist/auth.d.ts",
+      "default": "./dist/auth.js"
+    },
+    "./categories": {
+      "types": "./dist/categories.d.ts",
+      "default": "./dist/categories.js"
+    },
     "./documents": {
       "types": "./dist/documents.d.ts",
       "default": "./dist/documents.js"
+    },
+    "./sidebars": {
+      "types": "./dist/sidebars.d.ts",
+      "default": "./dist/sidebars.js"
+    },
+    "./tags": {
+      "types": "./dist/tags.d.ts",
+      "default": "./dist/tags.js"
     }
+  },
+  "prisma": {
+    "seed": "node dist/seed-rbac.js"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "lint": "eslint src --ext .ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "node --test dist/**/*.test.js"
+    "test": "node --test dist/**/*.test.js",
+    "seed:rbac": "node dist/seed-rbac.js"
   },
   "dependencies": {
+    "@lcc-blog/shared": "workspace:*",
     "@prisma/client": "^6.7.0"
   },
   "devDependencies": {

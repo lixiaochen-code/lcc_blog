@@ -6,11 +6,14 @@
     "dev": "next dev",
     "build": "next build --webpack",
     "lint": "eslint app components lib theme.config.tsx next.config.mjs --ext .ts,.tsx",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "tsx --test lib/**/*.test.ts"
   },
   "dependencies": {
     "@lcc-blog/db": "workspace:*",
+    "@lcc-blog/shared": "workspace:*",
     "next": "^16.2.3",
+    "next-auth": "^5.0.0-beta.25",
     "nextra": "^4.6.1",
     "nextra-theme-docs": "^4.6.1",
     "react": "^19.2.0",
@@ -19,6 +22,7 @@
   "devDependencies": {
     "@types/node": "25.6.0",
     "@types/react": "^19.2.2",
-    "@types/react-dom": "^19.2.2"
+    "@types/react-dom": "^19.2.2",
+    "tsx": "^4.19.3"
   }
 }

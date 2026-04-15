@@ -1,11 +1,14 @@
 import Link from "next/link";
 import { navItems } from "../lib/site-data";
+import { getCurrentSession } from "../lib/auth";
 
 interface SiteHeaderProps {
   currentPath: string;
 }
 
-export function SiteHeader({ currentPath }: SiteHeaderProps) {
+export async function SiteHeader({ currentPath }: SiteHeaderProps) {
+  const session = await getCurrentSession();
+
   return (
     <header className="site-header">
       <div className="site-header__inner">
@@ -27,6 +30,18 @@ export function SiteHeader({ currentPath }: SiteHeaderProps) {
               {item.label}
             </Link>
           ))}
+          {session?.user?.id ? (
+            <Link
+              href="/admin/documents"
+              data-active={currentPath.startsWith("/admin")}
+            >
+              后台
+            </Link>
+          ) : (
+            <Link href="/login" data-active={currentPath === "/login"}>
+              登录
+            </Link>
+          )}
         </nav>
       </div>
     </header>
