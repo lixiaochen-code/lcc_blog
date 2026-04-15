@@ -21,6 +21,18 @@
       "types": "./dist/documents.d.ts",
       "default": "./dist/documents.js"
     },
+    "./providers": {
+      "types": "./dist/providers.d.ts",
+      "default": "./dist/providers.js"
+    },
+    "./ai-search": {
+      "types": "./dist/ai-search.d.ts",
+      "default": "./dist/ai-search.js"
+    },
+    "./ai-logs": {
+      "types": "./dist/ai-logs.d.ts",
+      "default": "./dist/ai-logs.js"
+    },
     "./search": {
       "types": "./dist/search.d.ts",
       "default": "./dist/search.js"

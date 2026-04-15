@@ -10,7 +10,8 @@ export interface DocSummary {
 export const navItems = [
   { href: "/", label: "首页" },
   { href: "/docs", label: "文档中心" },
-  { href: "/search", label: "搜索" }
+  { href: "/search", label: "搜索" },
+  { href: "/ai/search", label: "AI 搜索" }
 ];
 
 export const docs: DocSummary[] = [

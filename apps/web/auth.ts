@@ -4,7 +4,15 @@ import { authRepository } from "@lcc-blog/db";
 import type { Session, User } from "next-auth";
 import type { JWT } from "next-auth/jwt";
 
+const authSecret =
+  process.env.AUTH_SECRET ??
+  process.env.NEXTAUTH_SECRET ??
+  (process.env.NODE_ENV === "development"
+    ? "local-dev-auth-secret-change-me"
+    : undefined);
+
 export const { auth, handlers, signIn, signOut } = NextAuth({
+  secret: authSecret,
   session: {
     strategy: "jwt"
   },

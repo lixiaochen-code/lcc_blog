@@ -1,20 +1,35 @@
 import { NextResponse } from "next/server";
-import { AuthorizationError, requireApiPermission } from "../../../../lib/auth";
+import type { AiSearchMode } from "@lcc-blog/db/ai-search";
+import { auth } from "../../../../auth";
+import { executeAiSearch } from "../../../../lib/ai-search";
+import { AuthorizationError } from "../../../../lib/auth";
 
 export async function POST(request: Request) {
   try {
-    await requireApiPermission("ai.search");
+    const body = (await request.json()) as {
+      query?: string;
+      mode?: AiSearchMode;
+      topK?: number;
+    };
+    const mode: AiSearchMode =
+      body.mode === "ask" || body.mode === "summarize" ? body.mode : "search";
+    const session = await auth();
 
-    const body = (await request.json()) as { query?: string };
-
-    return NextResponse.json({
-      mode: "search",
+    const result = await executeAiSearch({
+      session,
       query: body.query ?? "",
-      items: [],
-      message: "AI search placeholder guarded by RBAC"
+      mode,
+      topK: typeof body.topK === "number" ? body.topK : undefined
     });
+
+    return NextResponse.json(result);
   } catch (error) {
-    const status = error instanceof AuthorizationError ? error.status : 500;
+    const status =
+      error instanceof AuthorizationError
+        ? error.status
+        : error instanceof Error
+          ? 400
+          : 500;
     const message =
       error instanceof Error ? error.message : "ai search request failed";
 

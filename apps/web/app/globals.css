@@ -377,6 +377,72 @@ img {
   gap: 20px;
 }
 
+.ai-search-layout {
+  width: min(1120px, calc(100vw - 32px));
+  margin: 0 auto;
+  padding: 44px 0 56px;
+  display: grid;
+  gap: 20px;
+}
+
+.ai-search-panel {
+  display: grid;
+  gap: 24px;
+}
+
+.ai-search-panel__copy {
+  display: grid;
+  gap: 12px;
+}
+
+.ai-search-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1.8fr) repeat(2, minmax(0, 0.7fr)) auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.ai-search-form label {
+  display: grid;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.ai-search-form input,
+.ai-search-form select {
+  min-height: 48px;
+  padding: 0 16px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  font-size: 1rem;
+  background: white;
+  color: var(--text);
+}
+
+.ai-answer-card {
+  padding: 28px;
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  background: linear-gradient(180deg, #fff7ea, #fffdf8);
+  box-shadow: var(--shadow);
+}
+
+.ai-answer-card h2 {
+  margin: 16px 0 12px;
+}
+
+.ai-answer-card p {
+  margin: 0;
+  line-height: 1.8;
+}
+
+.ai-search-sections {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
 .search-panel form {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -450,11 +516,13 @@ img {
 @media (max-width: 900px) {
   .hero,
   .docs-layout,
-  .card-grid {
+  .card-grid,
+  .ai-search-sections {
     grid-template-columns: 1fr;
   }
 
   .search-panel form,
+  .ai-search-form,
   .site-footer__box,
   .site-header__inner {
     grid-template-columns: 1fr;
