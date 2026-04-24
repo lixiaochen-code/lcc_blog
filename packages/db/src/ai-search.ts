@@ -1,6 +1,10 @@
 import { aiLogsRepository } from "./ai-logs.js";
 import { generateTextWithDefaultProvider } from "./providers.js";
-import { searchDocuments, type SearchResultItem } from "./search.js";
+import {
+  listAccessibleSearchDocuments,
+  searchDocuments,
+  type SearchResultItem
+} from "./search.js";
 
 export type AiSearchMode = "search" | "ask" | "summarize";
 export type AiSearchAccess = "guest" | "member" | "admin";
@@ -88,6 +92,26 @@ function buildAnswer(
   return `${generatedText} ${modeSuffix} 参考来源：${citationLead}`.trim();
 }
 
+function isKnowledgeOverviewQuery(query: string) {
+  const normalized = query.trim().toLowerCase();
+  const overviewTerms = [
+    "有哪些",
+    "有什么",
+    "哪些内容",
+    "什么内容",
+    "知识库",
+    "文档",
+    "目录",
+    "全部",
+    "列表",
+    "overview",
+    "what",
+    "contents"
+  ];
+
+  return overviewTerms.some((term) => normalized.includes(term));
+}
+
 export async function runAiSearch(
   input: AiSearchInput
 ): Promise<AiSearchResponse> {
@@ -103,12 +127,21 @@ export async function runAiSearch(
     pageSize: clampTopK(input.topK),
     access: input.access
   });
+  const documents =
+    result.items.length > 0
+      ? result.items
+      : isKnowledgeOverviewQuery(query)
+        ? listAccessibleSearchDocuments({
+            access: input.access,
+            limit: clampTopK(input.topK)
+          })
+        : [];
 
-  if (result.items.length === 0) {
+  if (documents.length === 0) {
     throw new Error("no accessible documents matched the query");
   }
 
-  const citations = result.items.map((document) => ({
+  const citations = documents.map((document) => ({
     documentId: document.id,
     slug: document.slug,
     title: document.title,
@@ -117,7 +150,7 @@ export async function runAiSearch(
 
   const providerResult = await generateTextWithDefaultProvider({
     mode: input.mode,
-    prompt: buildPrompt(input, result.items)
+    prompt: buildPrompt(input, documents)
   });
 
   const task = aiLogsRepository.createAiSearchLog({
@@ -145,7 +178,7 @@ export async function runAiSearch(
   return {
     answer: buildAnswer(providerResult.text, citations, input.mode),
     citations,
-    relatedDocuments: result.items,
+    relatedDocuments: documents,
     taskId: task.id,
     provider: {
       name: providerResult.providerName,

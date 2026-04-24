@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { searchDocuments } from "./search.js";
+import { listAccessibleSearchDocuments, searchDocuments } from "./search.js";
 
 test("search DAL returns ranked matches with taxonomy metadata", () => {
   const result = searchDocuments({
@@ -67,4 +67,17 @@ test("search DAL paginates results", () => {
   assert.equal(firstPage.items.length, 1);
   assert.equal(secondPage.items.length, 1);
   assert.notEqual(firstPage.items[0]?.id, secondPage.items[0]?.id);
+});
+
+test("search DAL can list accessible documents for overview fallback", () => {
+  const memberItems = listAccessibleSearchDocuments({
+    access: "member",
+    limit: 10
+  });
+
+  assert.equal(memberItems.length > 0, true);
+  assert.equal(
+    memberItems.every((item) => item.visibility !== "private"),
+    true
+  );
 });

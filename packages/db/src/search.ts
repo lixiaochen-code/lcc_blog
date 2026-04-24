@@ -135,6 +135,39 @@ function buildExcerpt(document: DocumentRecord, query: string) {
   return `${prefix}${source.slice(start, end).trim()}${suffix}`;
 }
 
+function toSearchResultItem(document: DocumentRecord, score: number, query: string) {
+  const taxonomy = documentTaxonomy[document.id] ?? {
+    categories: [],
+    tags: []
+  };
+
+  return {
+    id: document.id,
+    slug: document.slug,
+    title: document.title,
+    summary: document.summary,
+    excerpt: buildExcerpt(document, query),
+    score,
+    status: document.status,
+    visibility: document.visibility,
+    categories: taxonomy.categories,
+    tags: taxonomy.tags
+  };
+}
+
+export function listAccessibleSearchDocuments(input: {
+  access: SearchDocumentsInput["access"];
+  limit?: number;
+}): SearchResultItem[] {
+  const limit = Math.min(50, Math.max(1, input.limit ?? 10));
+
+  return documentsRepository
+    .listDocuments()
+    .filter((document) => shouldIncludeDocument(document, input.access))
+    .slice(0, limit)
+    .map((document) => toSearchResultItem(document, 0, ""));
+}
+
 export function searchDocuments(
   input: SearchDocumentsInput
 ): SearchDocumentsResult {
@@ -174,25 +207,7 @@ export function searchDocuments(
   const start = (safePage - 1) * pageSize;
   const pageItems = matched
     .slice(start, start + pageSize)
-    .map(({ document, score }) => {
-      const taxonomy = documentTaxonomy[document.id] ?? {
-        categories: [],
-        tags: []
-      };
-
-      return {
-        id: document.id,
-        slug: document.slug,
-        title: document.title,
-        summary: document.summary,
-        excerpt: buildExcerpt(document, query),
-        score,
-        status: document.status,
-        visibility: document.visibility,
-        categories: taxonomy.categories,
-        tags: taxonomy.tags
-      };
-    });
+    .map(({ document, score }) => toSearchResultItem(document, score, query));
 
   return {
     items: pageItems,

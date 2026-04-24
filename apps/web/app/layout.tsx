@@ -18,7 +18,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="zh-CN">
       <body>
         <div className="site-shell">
-          <SiteHeader currentPath="" />
+          <SiteHeader />
           <main>{children}</main>
           <SiteFooter />
         </div>

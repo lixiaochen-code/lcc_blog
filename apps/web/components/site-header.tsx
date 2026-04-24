@@ -1,12 +1,8 @@
 import Link from "next/link";
-import { navItems } from "../lib/site-data";
 import { getCurrentSession } from "../lib/auth";
+import { SiteNav } from "./site-nav";
 
-interface SiteHeaderProps {
-  currentPath: string;
-}
-
-export async function SiteHeader({ currentPath }: SiteHeaderProps) {
+export async function SiteHeader() {
   const session = await getCurrentSession();
 
   return (
@@ -16,33 +12,7 @@ export async function SiteHeader({ currentPath }: SiteHeaderProps) {
           <strong>AI 驱动知识平台</strong>
           <span>文档站、知识库与 AI 协作壳体</span>
         </Link>
-        <nav className="site-nav" aria-label="主导航">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              data-active={
-                currentPath === item.href ||
-                currentPath.startsWith(`${item.href}/`) ||
-                (item.href === "/docs" && currentPath === "/docs")
-              }
-            >
-              {item.label}
-            </Link>
-          ))}
-          {session?.user?.id ? (
-            <Link
-              href="/admin/documents"
-              data-active={currentPath.startsWith("/admin")}
-            >
-              后台
-            </Link>
-          ) : (
-            <Link href="/login" data-active={currentPath === "/login"}>
-              登录
-            </Link>
-          )}
-        </nav>
+        <SiteNav isSignedIn={Boolean(session?.user?.id)} />
       </div>
     </header>
   );

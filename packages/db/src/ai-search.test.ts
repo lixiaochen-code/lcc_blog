@@ -17,7 +17,8 @@ test("ai search returns answer, citations, related documents, and logs", async (
   assert.equal(result.citations.length, 2);
   assert.equal(result.relatedDocuments.length, 2);
   assert.equal(result.answer.includes("参考来源："), true);
-  assert.equal(result.provider.name, "local-knowledge");
+  assert.equal(result.provider.name, "default-ai");
+  assert.equal(result.provider.model, "gpt-5.4");
 
   const aiLogs = aiLogsRepository.listAiSearchLogs();
   const auditLogs = aiLogsRepository.listAuditLogs();
@@ -74,4 +75,23 @@ test("ai search rejects empty or inaccessible queries", async () => {
     }),
     /no accessible documents matched the query/
   );
+});
+
+test("ai search falls back to accessible document overview for collection questions", async () => {
+  aiLogsRepository.reset();
+
+  const result = await runAiSearch({
+    query: "知识库有哪些内容？",
+    mode: "search",
+    topK: 3,
+    access: "member",
+    userId: "user_editor_seed"
+  });
+
+  assert.equal(result.citations.length, 3);
+  assert.equal(
+    result.relatedDocuments.every((item) => item.visibility !== "private"),
+    true
+  );
+  assert.equal(result.answer.includes("参考来源："), true);
 });

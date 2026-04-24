@@ -4,12 +4,12 @@ export interface DocSummary {
   section: string;
   summary: string;
   readingTime: string;
+  outline: string[];
   content: string[];
 }
 
 export const navItems = [
-  { href: "/", label: "首页" },
-  { href: "/docs", label: "文档中心" },
+  { href: "/docs", label: "文档" },
   { href: "/search", label: "搜索" },
   { href: "/ai/search", label: "AI 搜索" }
 ];
@@ -21,6 +21,7 @@ export const docs: DocSummary[] = [
     section: "开始使用",
     summary: "快速理解 AI 驱动知识平台的目标、模块边界和后续演进方向。",
     readingTime: "5 分钟",
+    outline: ["项目定位", "当前边界", "下一步"],
     content: [
       "该项目不是普通博客，而是一个面向知识治理和 AI 协作的文档平台。",
       "首轮实现重点是稳定骨架、文档展示壳体和后续接入真实 API 的前端结构。",
@@ -33,6 +34,7 @@ export const docs: DocSummary[] = [
     section: "内容治理",
     summary: "描述草稿、审批、发布、回滚之间的核心约束，用于后续内容流设计。",
     readingTime: "7 分钟",
+    outline: ["写入原则", "审批路径", "回滚能力"],
     content: [
       "内容写入默认走草稿化和变更集路径，避免 AI 直接覆盖已发布内容。",
       "审批、审计和回滚是平台的重要基础能力，不属于可选增强。",
@@ -45,6 +47,7 @@ export const docs: DocSummary[] = [
     section: "AI 能力",
     summary: "解释 AI 搜索与问答在系统中的定位，以及它与关键词搜索的关系。",
     readingTime: "6 分钟",
+    outline: ["检索入口", "引用要求", "权限边界"],
     content: [
       "AI 检索建立在基础搜索之上，先召回文档，再做回答生成与来源引用。",
       "普通用户可以使用只读 AI 能力，但不能发起写入型 AI 任务。",
@@ -52,6 +55,21 @@ export const docs: DocSummary[] = [
     ]
   }
 ];
+
+export const docSections = docs.reduce(
+  (sections, doc) => {
+    const current = sections.find((section) => section.title === doc.section);
+
+    if (current) {
+      current.items.push(doc);
+      return sections;
+    }
+
+    sections.push({ title: doc.section, items: [doc] });
+    return sections;
+  },
+  [] as { title: string; items: DocSummary[] }[]
+);
 
 export function getDocBySlug(slug: string[]) {
   return docs.find((doc) => doc.slug.join("/") === slug.join("/"));
