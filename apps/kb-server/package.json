@@ -1,5 +1,5 @@
 {
-  "name": "@uni-car-service/kb-server",
+  "name": "kb-server",
   "private": true,
   "type": "module"
 }

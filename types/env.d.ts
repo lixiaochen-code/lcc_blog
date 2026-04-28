@@ -8,12 +8,5 @@ declare module '*.vue' {
 }
 
 interface ImportMetaEnv {
-  /** 应用服务器地址 */
   readonly VITE_APP_SERVER_URL: string
-  /** 是否开启DEV功能 */
-  readonly VITE_APP_ON_DEV: string
-  /** 腾讯地图开发密钥 */
-  readonly VITE_APP_LOCATION_KEY: string
-  /** 腾讯地图API地址 */
-  readonly VITE_APP_LOCATION_URL: string
 }
