@@ -10,18 +10,33 @@ import globals from 'globals'
 const commonGlobals = {
   ...globals.browser,
   ...globals.node,
-  uni: 'readonly',
-  wx: 'readonly',
-  getCurrentPages: 'readonly',
 }
 
 export default [
   {
-    ignores: ['node_modules', 'dist', 'unpackage', '.output', '*.config.js', '*.cjs'],
+    ignores: ['node_modules', 'dist', '.output', '*.config.js', '*.cjs'],
   },
 
   // Base JS
   js.configs.recommended,
+
+  {
+    files: ['apps/kb-server/**/*.js'],
+    languageOptions: {
+      ecmaVersion: 'latest',
+      sourceType: 'module',
+      globals: {
+        ...globals.node,
+        AbortController: 'readonly',
+        TextDecoder: 'readonly',
+        URL: 'readonly',
+        fetch: 'readonly',
+      },
+    },
+    rules: {
+      'no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+    },
+  },
 
   // Vue defaults
   ...vuePlugin.configs['flat/recommended'],

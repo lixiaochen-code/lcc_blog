@@ -3,7 +3,13 @@ import { randomUUID } from 'node:crypto'
 import { config } from './config.js'
 import { createToken, randomPassword, verifyPassword, verifyToken, hashPassword } from './auth.js'
 import { JsonStore, permissions } from './store.js'
-import { deleteArticle, listTree, readArticle, relativeKnowledgeRoot, writeArticle } from './markdown.js'
+import {
+  deleteArticle,
+  listTree,
+  readArticle,
+  relativeKnowledgeRoot,
+  writeArticle,
+} from './markdown.js'
 import { createAiReply, streamAiReply } from './ai.js'
 import { webSearch } from './mcp.js'
 
@@ -74,7 +80,13 @@ const requirePermission = (req, permission) => {
 
 const audit = (actorId, action, detail) => {
   store.mutate(data => {
-    data.auditLogs.unshift({ id: randomUUID(), actorId, action, detail, createdAt: new Date().toISOString() })
+    data.auditLogs.unshift({
+      id: randomUUID(),
+      actorId,
+      action,
+      detail,
+      createdAt: new Date().toISOString(),
+    })
     data.auditLogs = data.auditLogs.slice(0, 500)
   })
 }
@@ -96,7 +108,10 @@ async function route(req, res) {
       return json(res, 401, { message: '账号或密码错误' })
     }
     const token = createToken({ sub: user.id, username: user.username })
-    return json(res, 200, { token, user: getUserContext({ headers: { authorization: `Bearer ${token}` } }) })
+    return json(res, 200, {
+      token,
+      user: getUserContext({ headers: { authorization: `Bearer ${token}` } }),
+    })
   }
 
   if (req.method === 'GET' && path === '/api/auth/me') {
@@ -149,11 +164,27 @@ async function route(req, res) {
     store.mutate(data => {
       let conversation = data.conversations.find(item => item.id === conversationId)
       if (!conversation) {
-        conversation = { id: conversationId, userId: ctx.user.id, title: body.message.slice(0, 30), messages: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }
+        conversation = {
+          id: conversationId,
+          userId: ctx.user.id,
+          title: body.message.slice(0, 30),
+          messages: [],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }
         data.conversations.unshift(conversation)
       }
-      conversation.messages.push({ role: 'user', content: body.message, createdAt: new Date().toISOString() })
-      conversation.messages.push({ role: 'assistant', content: reply.content, draft: reply.draft, createdAt: new Date().toISOString() })
+      conversation.messages.push({
+        role: 'user',
+        content: body.message,
+        createdAt: new Date().toISOString(),
+      })
+      conversation.messages.push({
+        role: 'assistant',
+        content: reply.content,
+        draft: reply.draft,
+        createdAt: new Date().toISOString(),
+      })
       conversation.updatedAt = new Date().toISOString()
     })
     return json(res, 200, { conversationId, ...reply })
@@ -192,7 +223,11 @@ async function route(req, res) {
               }
               data.conversations.unshift(conversation)
             }
-            conversation.messages.push({ role: 'user', content: body.message, createdAt: new Date().toISOString() })
+            conversation.messages.push({
+              role: 'user',
+              content: body.message,
+              createdAt: new Date().toISOString(),
+            })
             conversation.messages.push({
               role: 'assistant',
               content: reply.content,
@@ -271,7 +306,9 @@ async function route(req, res) {
   if (req.method === 'GET' && path === '/api/admin/users') {
     requirePermission(req, 'user:update')
     const data = store.read()
-    return json(res, 200, { items: data.users.map(({ passwordHash, ...user }) => user) })
+    return json(res, 200, {
+      items: data.users.map(({ passwordHash: _passwordHash, ...user }) => user),
+    })
   }
 
   if (req.method === 'POST' && path === '/api/admin/users') {
@@ -297,7 +334,7 @@ async function route(req, res) {
       return item
     })
     audit(ctx.user.id, 'user:create', { userId: user.id })
-    const { passwordHash, ...safeUser } = user
+    const { passwordHash: _passwordHash, ...safeUser } = user
     return json(res, 200, { user: safeUser, password })
   }
 
@@ -323,7 +360,7 @@ async function route(req, res) {
       return { user }
     })
     audit(ctx.user.id, 'user:update', { userId: result.user.id })
-    const { passwordHash, ...safeUser } = result.user
+    const { passwordHash: _passwordHash, ...safeUser } = result.user
     return json(res, 200, { user: safeUser, password: result.password })
   }
 

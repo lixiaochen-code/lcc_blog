@@ -1,22 +1,19 @@
 {
   "compilerOptions": {
-    "target": "ESNext",
+    "target": "ES2020",
     "useDefineForClassFields": true,
     "module": "ESNext",
     "moduleResolution": "Node",
     "strict": true,
     "jsx": "preserve",
-    "sourceMap": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
     "esModuleInterop": true,
-    "lib": ["ESNext", "DOM"],
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "types": ["node"],
     "skipLibCheck": true,
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["./apps/kb-web/src/*"]
-    }
+    "noEmit": true
   },
-  "include": ["apps/kb-web/src/**/*.ts", "apps/kb-web/src/**/*.d.ts", "apps/kb-web/src/**/*.vue", "types/**/*.d.ts"],
+  "include": ["apps/kb-web/src/**/*.ts", "apps/kb-web/src/**/*.vue", "apps/kb-web/vite.config.ts"],
   "references": []
 }

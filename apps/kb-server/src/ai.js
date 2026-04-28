@@ -27,10 +27,16 @@ const inferDraft = (message, currentArticle) => {
 
 const buildReasoningSummary = ({ currentArticle, articleList, search, draft }) => {
   const steps = []
-  steps.push(currentArticle ? `已读取当前文章：${currentArticle.path}` : '未绑定当前文章，仅根据用户输入处理')
+  steps.push(
+    currentArticle ? `已读取当前文章：${currentArticle.path}` : '未绑定当前文章，仅根据用户输入处理'
+  )
   steps.push(`已加载知识库目录上下文：${articleList.length} 篇文章`)
   if (search) {
-    steps.push(search.error ? `网络检索未成功：${search.error}` : `已执行网络检索，获得 ${search.results?.length || 0} 条参考`)
+    steps.push(
+      search.error
+        ? `网络检索未成功：${search.error}`
+        : `已执行网络检索，获得 ${search.results?.length || 0} 条参考`
+    )
   }
   if (draft) {
     steps.push(`识别为 ${draft.operation} 操作，目标路径：${draft.path}`)
@@ -41,16 +47,30 @@ const buildReasoningSummary = ({ currentArticle, articleList, search, draft }) =
   return steps
 }
 
-const buildMessages = ({ message, history, currentArticle, articleList, search }) => [
-  { role: 'system', content: systemPrompt },
-  { role: 'system', content: `知识库文章列表：${articleList.map(item => item.path).join(', ')}` },
-  search ? { role: 'system', content: `网络检索参考：\n${JSON.stringify(search.results || [], null, 2)}` } : null,
-  currentArticle ? { role: 'system', content: `当前文章：\n${currentArticle.content.slice(0, 12000)}` } : null,
-  ...history.slice(-12),
-  { role: 'user', content: message },
-].filter(Boolean)
+const buildMessages = ({ message, history, currentArticle, articleList, search }) =>
+  [
+    { role: 'system', content: systemPrompt },
+    { role: 'system', content: `知识库文章列表：${articleList.map(item => item.path).join(', ')}` },
+    search
+      ? {
+          role: 'system',
+          content: `网络检索参考：\n${JSON.stringify(search.results || [], null, 2)}`,
+        }
+      : null,
+    currentArticle
+      ? { role: 'system', content: `当前文章：\n${currentArticle.content.slice(0, 12000)}` }
+      : null,
+    ...history.slice(-12),
+    { role: 'user', content: message },
+  ].filter(Boolean)
 
-export async function createAiContext({ message, history = [], currentPath, useWebSearch = false, onTool }) {
+export async function createAiContext({
+  message,
+  history = [],
+  currentPath,
+  useWebSearch = false,
+  onTool,
+}) {
   onTool?.({ name: '读取知识库上下文', status: 'running', detail: currentPath || '未选择文章' })
   const articleList = flattenTree().slice(0, 30)
   const currentArticle = currentPath ? readArticle(currentPath) : null
@@ -58,7 +78,11 @@ export async function createAiContext({ message, history = [], currentPath, useW
 
   onTool?.({ name: '识别知识库操作', status: 'running', detail: '判断是否需要生成草稿' })
   const draft = inferDraft(message, currentArticle)
-  onTool?.({ name: '识别知识库操作', status: 'done', detail: draft ? `${draft.operation}: ${draft.path}` : '普通问答' })
+  onTool?.({
+    name: '识别知识库操作',
+    status: 'done',
+    detail: draft ? `${draft.operation}: ${draft.path}` : '普通问答',
+  })
 
   let search = null
   if (useWebSearch) {
@@ -82,7 +106,7 @@ export async function createAiContext({ message, history = [], currentPath, useW
 }
 
 export async function createAiReply(payload) {
-  const { articleList, currentArticle, draft, search, reasoning, messages } = await createAiContext(payload)
+  const { articleList, draft, search, reasoning, messages } = await createAiContext(payload)
 
   if (!config.openai.apiKey) {
     return {
