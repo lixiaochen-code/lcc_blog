@@ -10,29 +10,34 @@
       </div>
 
       <nav class="top-nav">
-        <button :class="{ active: viewMode === 'read' }" @click="viewMode = 'read'">文档</button>
-        <button
+        <Button :variant="viewMode === 'read' ? 'default' : 'outline'" @click="viewMode = 'read'">
+          文档
+        </Button>
+        <Button
           v-if="can('user:update') || can('role:assign')"
-          :class="{ active: viewMode === 'admin' }"
+          :variant="viewMode === 'admin' ? 'default' : 'outline'"
           @click="viewMode = 'admin'"
         >
           管理
-        </button>
+        </Button>
       </nav>
 
       <div class="header-actions">
-        <button
+        <Button
           v-if="session && can('ai:use')"
-          class="ai-toggle"
-          :class="{ active: aiOpen }"
+          :variant="aiOpen ? 'default' : 'outline'"
           @click="aiOpen = !aiOpen"
         >
+          <PanelRightOpen data-icon="inline-start" />
           AI 面板
-        </button>
-        <button v-else class="ai-toggle ghost" @click="loginOpen = true">登录使用 AI</button>
+        </Button>
+        <Button v-else variant="ghost" @click="loginOpen = true">登录使用 AI</Button>
         <span v-if="session" class="user-chip">{{ session.user.username }}</span>
-        <button v-if="session" class="plain" @click="logout">退出</button>
-        <button v-else class="primary" @click="loginOpen = true">登录</button>
+        <Button v-if="session" variant="ghost" @click="logout">
+          <LogOut data-icon="inline-start" />
+          退出
+        </Button>
+        <Button v-else @click="loginOpen = true">登录</Button>
       </div>
     </header>
 
@@ -40,7 +45,15 @@
       <aside class="sidebar">
         <div class="sidebar-head">
           <span>目录</span>
-          <button v-if="can('kb:create')" title="新增文章" @click="startCreate">+</button>
+          <Button
+            v-if="can('kb:create')"
+            size="icon"
+            variant="outline"
+            title="新增文章"
+            @click="startCreate"
+          >
+            <Plus />
+          </Button>
         </div>
         <div v-if="!session" class="empty-state">登录后查看知识库目录。</div>
         <TreeList v-else :items="tree" :active-path="activePath" @select="loadArticle" />
@@ -57,7 +70,9 @@
             <section class="admin-section">
               <div class="section-title">
                 <h2>账号</h2>
-                <button v-if="can('user:create')" @click="createUser">新增账号</button>
+                <Button v-if="can('user:create')" variant="outline" @click="createUser">
+                  新增账号
+                </Button>
               </div>
               <div class="data-table">
                 <div class="table-row table-head">
@@ -81,9 +96,13 @@
                 <strong>{{ role.name }}</strong>
                 <p>{{ role.description }}</p>
                 <div class="permission-list">
-                  <span v-for="permission in role.permissions" :key="permission">{{
-                    permission
-                  }}</span>
+                  <Badge
+                    v-for="permission in role.permissions"
+                    :key="permission"
+                    variant="secondary"
+                  >
+                    {{ permission }}
+                  </Badge>
                 </div>
               </div>
             </section>
@@ -93,7 +112,7 @@
         <section v-else-if="!session" class="welcome">
           <p>Private Knowledge Base</p>
           <h1>登录后进入可迭代知识库</h1>
-          <button class="primary large" @click="loginOpen = true">登录知识库</button>
+          <Button size="lg" @click="loginOpen = true">登录知识库</Button>
         </section>
 
         <section v-else class="doc-view">
@@ -103,15 +122,17 @@
               <h1>{{ activeArticle?.title || '知识库' }}</h1>
             </div>
             <div v-if="activeArticle" class="toolbar-actions">
-              <button v-if="can('kb:update')" @click="editing = !editing">
+              <Button v-if="can('kb:update')" variant="outline" @click="editing = !editing">
                 {{ editing ? '预览' : '编辑' }}
-              </button>
-              <button v-if="can('kb:update')" class="primary" @click="saveArticle">保存</button>
-              <button v-if="can('kb:delete')" class="danger" @click="removeArticle">删除</button>
+              </Button>
+              <Button v-if="can('kb:update')" @click="saveArticle">保存</Button>
+              <Button v-if="can('kb:delete')" variant="destructive" @click="removeArticle"
+                >删除</Button
+              >
             </div>
           </div>
 
-          <textarea
+          <Textarea
             v-if="editing && activeArticle"
             v-model="editorContent"
             class="editor"
@@ -132,7 +153,9 @@
             <strong>AI 草稿助手</strong>
             <span>{{ activePath || '未选择文章' }}</span>
           </div>
-          <button title="收起" @click="aiOpen = false">×</button>
+          <Button size="icon" variant="outline" title="收起" @click="aiOpen = false">
+            <X />
+          </Button>
         </div>
 
         <div class="messages">
@@ -173,13 +196,13 @@
             </details>
             <div v-if="message.draft" class="draft-box">
               <div class="draft-meta">
-                <span>{{ message.draft.operation }}</span>
+                <Badge variant="secondary">{{ message.draft.operation }}</Badge>
                 <strong>{{ message.draft.path }}</strong>
               </div>
               <pre v-if="message.draft.content">{{ message.draft.content }}</pre>
-              <button v-if="can('ai:write_kb')" class="primary" @click="applyDraft(message.draft)">
+              <Button v-if="can('ai:write_kb')" @click="applyDraft(message.draft)">
                 确认写入
-              </button>
+              </Button>
             </div>
             <div v-if="message.sources?.length" class="source-list">
               <a
@@ -200,11 +223,11 @@
 
         <form class="composer" @submit.prevent="sendMessage">
           <label class="search-toggle">
-            <input v-model="useWebSearch" type="checkbox" />
+            <Checkbox v-model="useWebSearch" />
             网络检索
           </label>
-          <textarea v-model="prompt" placeholder="让 AI 新增、修改、整理当前知识库..." />
-          <button class="primary" :disabled="sending || !prompt.trim()">发送</button>
+          <Textarea v-model="prompt" placeholder="让 AI 新增、修改、整理当前知识库..." />
+          <Button :disabled="sending || !prompt.trim()">发送</Button>
         </form>
       </aside>
     </div>
@@ -214,15 +237,63 @@
         <h2>登录知识库</h2>
         <label>
           账号
-          <input v-model="loginForm.username" autocomplete="username" />
+          <Input v-model="loginForm.username" autocomplete="username" />
         </label>
         <label>
           密码
-          <input v-model="loginForm.password" type="password" autocomplete="current-password" />
+          <Input v-model="loginForm.password" type="password" autocomplete="current-password" />
         </label>
         <p v-if="error" class="error">{{ error }}</p>
-        <button class="primary large">登录</button>
+        <Button size="lg" class="w-full">登录</Button>
         <small>默认超管：superadmin / Admin@123456</small>
+      </form>
+    </div>
+
+    <div v-if="articleDialogOpen" class="modal-backdrop" @click.self="articleDialogOpen = false">
+      <form class="login-modal" @submit.prevent="submitCreateArticle">
+        <h2>新增文章</h2>
+        <label>
+          所属目录
+          <select v-model="articleDirectoryInput" class="form-select">
+            <option value="">根目录</option>
+            <option
+              v-for="directory in directoryOptions"
+              :key="directory.path"
+              :value="directory.path"
+            >
+              {{ directory.label }}
+            </option>
+          </select>
+        </label>
+        <label>
+          文件名称
+          <Input
+            v-model="articleFileNameInput"
+            autocomplete="off"
+            placeholder="intro.md"
+            autofocus
+          />
+        </label>
+        <p v-if="articleDialogError" class="error">{{ articleDialogError }}</p>
+        <div class="modal-actions">
+          <Button type="button" variant="outline" @click="articleDialogOpen = false">取消</Button>
+          <Button type="submit">创建</Button>
+        </div>
+      </form>
+    </div>
+
+    <div v-if="userDialogOpen" class="modal-backdrop" @click.self="userDialogOpen = false">
+      <form class="login-modal" @submit.prevent="submitCreateUser">
+        <h2>新增账号</h2>
+        <label>
+          账号名
+          <Input v-model="usernameInput" autocomplete="off" placeholder="new-user" autofocus />
+        </label>
+        <p v-if="userDialogError" class="error">{{ userDialogError }}</p>
+        <div class="modal-actions">
+          <Button type="button" variant="outline" @click="userDialogOpen = false">取消</Button>
+          <Button type="submit">创建</Button>
+        </div>
       </form>
     </div>
   </div>
@@ -230,7 +301,13 @@
 
 <script setup lang="ts">
   import { computed, defineComponent, h, onMounted, ref, type VNode } from 'vue'
+  import { LogOut, PanelRightOpen, Plus, X } from 'lucide-vue-next'
   import { api, clearToken, getToken, setToken } from './api'
+  import { Badge } from './components/ui/badge'
+  import { Button } from './components/ui/button'
+  import { Checkbox } from './components/ui/checkbox'
+  import { Input } from './components/ui/input'
+  import { Textarea } from './components/ui/textarea'
   import type { Article, Draft, Role, SearchSource, SessionUser, TreeItem, User } from './api'
   import { renderMarkdown } from './markdown'
 
@@ -297,8 +374,16 @@
   const conversationId = ref('')
   const useWebSearch = ref(false)
   const loginForm = ref({ username: 'superadmin', password: 'Admin@123456' })
+  const articleDialogOpen = ref(false)
+  const articleDirectoryInput = ref('')
+  const articleFileNameInput = ref('')
+  const articleDialogError = ref('')
+  const userDialogOpen = ref(false)
+  const usernameInput = ref('')
+  const userDialogError = ref('')
 
   const permissions = computed(() => session.value?.permissions || [])
+  const directoryOptions = computed(() => collectDirectoryOptions(tree.value))
   const can = (permission: string) => permissions.value.includes(permission)
 
   async function refreshTree() {
@@ -342,15 +427,40 @@
     viewMode.value = 'read'
   }
 
-  async function startCreate() {
-    const path = window.prompt('请输入文章路径，例如 guide/intro.md')
-    if (!path) return
+  function startCreate() {
+    articleDirectoryInput.value = activePath.value ? activePath.value.replace(/\/[^/]+$/, '') : ''
+    articleFileNameInput.value = ''
+    articleDialogError.value = ''
+    articleDialogOpen.value = true
+  }
+
+  async function submitCreateArticle() {
+    const filename = articleFileNameInput.value.trim()
+    const directory = articleDirectoryInput.value.trim().replace(/^\/|\/$/g, '')
+    if (!filename) {
+      articleDialogError.value = '请输入文件名称'
+      return
+    }
+    if (filename.includes('/')) {
+      articleDialogError.value = '文件名称不能包含目录分隔符，请在目录字段中选择位置'
+      return
+    }
+    const normalizedFilename = filename.endsWith('.md') ? filename : `${filename}.md`
+    const path = directory ? `${directory}/${normalizedFilename}` : normalizedFilename
     const title = path.split('/').pop()?.replace(/\.md$/, '') || '新文章'
-    activeArticle.value = await api.createArticle(path, `# ${title}\n\n开始编写内容。\n`)
-    activePath.value = activeArticle.value.path
-    editorContent.value = activeArticle.value.content
-    editing.value = true
-    await refreshTree()
+    try {
+      activeArticle.value = await api.createArticle(path, `# ${title}\n\n开始编写内容。\n`)
+      activePath.value = activeArticle.value.path
+      editorContent.value = activeArticle.value.content
+      editing.value = true
+      viewMode.value = 'read'
+      articleDialogOpen.value = false
+      articleDirectoryInput.value = ''
+      articleFileNameInput.value = ''
+      await refreshTree()
+    } catch (err) {
+      articleDialogError.value = err instanceof Error ? err.message : '创建文章失败'
+    }
   }
 
   async function saveArticle() {
@@ -477,18 +587,43 @@
     if ('content' in result) await loadArticle(result.path)
   }
 
-  async function createUser() {
-    const username = window.prompt('请输入新账号名')
-    if (!username) return
+  function createUser() {
+    usernameInput.value = ''
+    userDialogError.value = ''
+    userDialogOpen.value = true
+  }
+
+  async function submitCreateUser() {
+    const username = usernameInput.value.trim()
+    if (!username) {
+      userDialogError.value = '请输入账号名'
+      return
+    }
     const readerRole =
       roles.value.find(role => role.permissions.includes('kb:view')) || roles.value[0]
     const result = await api.createUser({ username, roleIds: readerRole ? [readerRole.id] : [] })
+    userDialogOpen.value = false
+    usernameInput.value = ''
     window.alert(`账号已创建\n用户名：${result.user.username}\n初始密码：${result.password}`)
     await refreshAdmin()
   }
 
   function roleNames(roleIds: string[]) {
     return roleIds.map(id => roles.value.find(role => role.id === id)?.name || id).join('、')
+  }
+
+  function collectDirectoryOptions(
+    items: TreeItem[],
+    depth = 0
+  ): { path: string; label: string }[] {
+    return items.flatMap(item => {
+      if (item.type !== 'directory') return []
+      const prefix = depth ? `${'　'.repeat(depth)}└ ` : ''
+      return [
+        { path: item.path, label: `${prefix}${item.name}` },
+        ...collectDirectoryOptions(item.children || [], depth + 1),
+      ]
+    })
   }
 
   onMounted(async () => {

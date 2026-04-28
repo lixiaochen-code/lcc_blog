@@ -3,7 +3,7 @@
     "target": "ES2020",
     "useDefineForClassFields": true,
     "module": "ESNext",
-    "moduleResolution": "Node",
+    "moduleResolution": "Bundler",
     "strict": true,
     "jsx": "preserve",
     "resolveJsonModule": true,
@@ -11,6 +11,10 @@
     "esModuleInterop": true,
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "types": ["node"],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["apps/kb-web/src/*"]
+    },
     "skipLibCheck": true,
     "noEmit": true
   },

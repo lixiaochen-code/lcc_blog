@@ -1,9 +1,58 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
 :root {
+  --radius: 0.5rem;
+  --background: #f5f7fb;
+  --foreground: #111827;
+  --card: #ffffff;
+  --card-foreground: #111827;
+  --popover: #ffffff;
+  --popover-foreground: #111827;
+  --primary: #3451b2;
+  --primary-foreground: #ffffff;
+  --secondary: #eef2f8;
+  --secondary-foreground: #334155;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: #edf2ff;
+  --accent-foreground: #2f47a3;
+  --destructive: #b42318;
+  --border: #dbe4f0;
+  --input: #d7dce2;
+  --ring: #8ea3e6;
   color: #1f2937;
   background: #f5f7fb;
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   line-height: 1.5;
+}
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
 }
 
 * {
@@ -16,13 +65,12 @@ body {
   background: #f5f7fb;
 }
 
-button,
 input,
 textarea {
   font: inherit;
 }
 
-button {
+button:not([data-slot]) {
   border: 1px solid #d6dbe5;
   background: #ffffff;
   color: #334155;
@@ -38,30 +86,30 @@ button {
     transform 160ms ease;
 }
 
-button:hover {
+button:not([data-slot]):hover {
   border-color: #9aa8bd;
   box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
 }
 
-button.active,
+button:not([data-slot]).active,
 .primary {
   border-color: #3451b2;
   background: #3451b2;
   color: #ffffff;
 }
 
-button.danger {
+button:not([data-slot]).danger {
   color: #b42318;
   border-color: #f2b8b5;
 }
 
-button.ghost,
-button.plain {
+button:not([data-slot]).ghost,
+button:not([data-slot]).plain {
   border-color: transparent;
   background: transparent;
 }
 
-button.large {
+button:not([data-slot]).large {
   min-height: 42px;
   padding: 0 18px;
 }
@@ -743,6 +791,22 @@ button.large {
   padding: 0 10px;
 }
 
+.form-select {
+  height: 40px;
+  width: 100%;
+  border: 1px solid #d7dce2;
+  border-radius: 6px;
+  padding: 0 10px;
+  color: #1f2937;
+  background: #ffffff;
+  outline: none;
+}
+
+.form-select:focus {
+  border-color: #3451b2;
+  box-shadow: 0 0 0 3px rgba(52, 81, 178, 0.12);
+}
+
 .login-modal .large {
   width: 100%;
   margin-top: 8px;
@@ -752,6 +816,13 @@ button.large {
   display: block;
   margin-top: 12px;
   color: #64748b;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 18px;
 }
 
 .error {
