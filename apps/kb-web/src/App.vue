@@ -185,9 +185,11 @@
               <a
                 v-for="source in message.sources"
                 :key="source.url || source.title"
+                class="source-link"
                 :href="source.url"
                 target="_blank"
                 rel="noreferrer"
+                :title="source.url || source.title"
               >
                 <strong>{{ source.title }}</strong>
                 <span>{{ source.snippet }}</span>

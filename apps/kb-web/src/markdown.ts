@@ -40,6 +40,15 @@ export function renderMarkdown(markdown: string) {
       continue
     }
 
+    if (/^\s*---+\s*$/.test(line)) {
+      if (inList) {
+        html.push('</ul>')
+        inList = false
+      }
+      html.push('<hr />')
+      continue
+    }
+
     if (/^-\s+/.test(line)) {
       if (!inList) {
         html.push('<ul>')
