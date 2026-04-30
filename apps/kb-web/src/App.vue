@@ -199,7 +199,7 @@
         <form class="composer" @submit.prevent="sendMessage">
           <label class="search-toggle">
             <input v-model="useWebSearch" type="checkbox" />
-            网络检索
+            允许网络检索
           </label>
           <textarea v-model="prompt" placeholder="让 AI 新增、修改、整理当前知识库..." />
           <button class="primary" :disabled="sending || !prompt.trim()">发送</button>
@@ -378,7 +378,7 @@
     prompt.value = ''
     const history = messages.value
       .filter(message => message.content)
-      .map(({ role, content }) => ({ role, content }))
+      .map(message => ({ role: message.role, content: formatHistoryContent(message) }))
     messages.value.push({ role: 'user', content })
     const assistantMessage: ChatMessage = {
       role: 'assistant',
@@ -409,6 +409,13 @@
       assistantMessage.streaming = false
       sending.value = false
     }
+  }
+
+  function formatHistoryContent(message: ChatMessage) {
+    if (!message.draft || message.draft.operation === 'delete' || !message.draft.content) {
+      return message.content
+    }
+    return `${message.content}\n\n[AI_DRAFT operation="${message.draft.operation}" path="${message.draft.path}"]\n\`\`\`markdown\n${message.draft.content}\n\`\`\``
   }
 
   async function readAiStream(response: Response, assistantMessage: ChatMessage) {
