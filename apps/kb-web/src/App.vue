@@ -2,10 +2,10 @@
   <div class="kb-shell" :class="{ 'ai-open': aiOpen }">
     <header class="kb-header">
       <div class="brand">
-        <span class="brand-mark">K</span>
+        <span class="brand-mark">L</span>
         <div>
-          <strong>AI 知识库</strong>
-          <small>Markdown workspace</small>
+          <strong>LCC Knowledge</strong>
+          <small>personal · markdown</small>
         </div>
       </div>
 
@@ -43,7 +43,7 @@
           <button v-if="can('kb:create')" title="新增文章" @click="startCreate">+</button>
         </div>
         <div v-if="!session" class="empty-state">登录后查看知识库目录。</div>
-        <TreeList v-else :items="tree" :active-path="activePath" @select="loadArticle" />
+        <TreeList v-else :items="tree" :active-path="activePath" @select="selectArticle" />
       </aside>
 
       <main class="workspace">
@@ -107,6 +107,7 @@
                 {{ editing ? '预览' : '编辑' }}
               </button>
               <button v-if="can('kb:update')" class="primary" @click="saveArticle">保存</button>
+              <button @click="clearActiveArticle">取消选择</button>
               <button v-if="can('kb:delete')" class="danger" @click="removeArticle">删除</button>
             </div>
           </div>
@@ -130,7 +131,18 @@
         <div class="ai-head">
           <div>
             <strong>AI 草稿助手</strong>
-            <span>{{ activePath || '未选择文章' }}</span>
+            <div class="ai-context">
+              <span>{{ activePath || '未选择文章' }}</span>
+              <button
+                v-if="activePath"
+                class="plain context-clear"
+                type="button"
+                title="取消绑定当前文章"
+                @click="clearActiveArticle"
+              >
+                取消绑定
+              </button>
+            </div>
           </div>
           <button title="收起" @click="aiOpen = false">×</button>
         </div>
@@ -148,10 +160,7 @@
               <span></span>
               正在组织回答
             </div>
-            <div
-              class="message-content markdown-body compact"
-              v-html="renderMarkdown(message.content)"
-            />
+            <div class="message-content markdown-body compact" v-html="displayContent(message)" />
             <details v-if="message.toolCalls?.length" class="tool-chain" open>
               <summary>工具调用链</summary>
               <ol>
@@ -173,12 +182,17 @@
             </details>
             <div v-if="message.draft" class="draft-box">
               <div class="draft-meta">
-                <span>{{ message.draft.operation }}</span>
-                <strong>{{ message.draft.path }}</strong>
+                <span>{{ draftOperationLabel(message.draft.operation) }}</span>
+                <strong>{{ draftTargetLabel(message.draft) }}</strong>
               </div>
               <pre v-if="message.draft.content">{{ message.draft.content }}</pre>
-              <button v-if="can('ai:write_kb')" class="primary" @click="applyDraft(message.draft)">
-                确认写入
+              <button
+                v-if="can('ai:write_kb') && canApplyDraft(message.draft)"
+                :class="message.draft.operation === 'delete' ? 'danger' : 'primary'"
+                :disabled="applyingDraft"
+                @click="applyDraft(message.draft)"
+              >
+                {{ draftActionLabel(message.draft) }}
               </button>
             </div>
             <div v-if="message.sources?.length" class="source-list">
@@ -201,8 +215,17 @@
             <input v-model="useWebSearch" type="checkbox" />
             允许网络检索
           </label>
-          <textarea v-model="prompt" placeholder="让 AI 新增、修改、整理当前知识库..." />
-          <button class="primary" :disabled="sending || !prompt.trim()">发送</button>
+          <textarea
+            v-model="prompt"
+            placeholder="让 AI 阅读、撰写或整理知识库……"
+            @keydown.enter.meta.prevent="sendMessage"
+            @keydown.enter.ctrl.prevent="sendMessage"
+          />
+          <div class="composer-actions">
+            <span class="hint">⌘/Ctrl + Enter 发送 · Shift + Enter 换行</span>
+            <button v-if="sending" type="button" class="ghost" @click="stopGenerating">停止</button>
+            <button class="primary" :disabled="sending || !prompt.trim()">发送</button>
+          </div>
         </form>
       </aside>
     </div>
@@ -249,7 +272,9 @@
                 'button',
                 {
                   class: { active: props.activePath === item.path },
-                  onClick: () => item.type === 'article' && emit('select', item.path),
+                  onClick: () =>
+                    item.type === 'article' &&
+                    emit('select', props.activePath === item.path ? '' : item.path),
                 },
                 item.type === 'directory' ? item.name : item.title || item.name
               ),
@@ -292,6 +317,7 @@
   const messages = ref<ChatMessage[]>([])
   const prompt = ref('')
   const sending = ref(false)
+  const applyingDraft = ref(false)
   const conversationId = ref('')
   const useWebSearch = ref(false)
   const loginForm = ref({ username: 'superadmin', password: 'Admin@123456' })
@@ -317,6 +343,21 @@
     editing.value = false
   }
 
+  async function selectArticle(path: string) {
+    if (!path) {
+      clearActiveArticle()
+      return
+    }
+    await loadArticle(path)
+  }
+
+  function clearActiveArticle() {
+    activePath.value = ''
+    activeArticle.value = null
+    editorContent.value = ''
+    editing.value = false
+  }
+
   async function login() {
     error.value = ''
     try {
@@ -335,7 +376,7 @@
     clearToken()
     session.value = null
     tree.value = []
-    activeArticle.value = null
+    clearActiveArticle()
     aiOpen.value = false
     viewMode.value = 'read'
   }
@@ -366,19 +407,19 @@
     )
     if (!confirmed) return
     await api.deleteArticle(activeArticle.value.path)
-    activeArticle.value = null
-    activePath.value = ''
-    editorContent.value = ''
+    clearActiveArticle()
     await refreshTree()
   }
 
+  let activeController: AbortController | null = null
+
   async function sendMessage() {
-    if (!prompt.value.trim()) return
+    if (!prompt.value.trim() || sending.value) return
     const content = prompt.value.trim()
     prompt.value = ''
     const history = messages.value
       .filter(message => message.content)
-      .map(message => ({ role: message.role, content: formatHistoryContent(message) }))
+      .map(message => ({ role: message.role, content: message.content }))
     messages.value.push({ role: 'user', content })
     const assistantMessage: ChatMessage = {
       role: 'assistant',
@@ -388,6 +429,7 @@
     }
     messages.value.push(assistantMessage)
     sending.value = true
+    activeController = new AbortController()
     try {
       const response = await fetch('/api/ai/chat/stream', {
         method: 'POST',
@@ -402,20 +444,23 @@
           useWebSearch: useWebSearch.value,
           history,
         }),
+        signal: activeController.signal,
       })
       if (!response.ok || !response.body) throw new Error('AI 流式请求失败')
       await readAiStream(response, assistantMessage)
+    } catch (err) {
+      if ((err as Error)?.name !== 'AbortError') {
+        assistantMessage.content ||= `请求失败：${(err as Error).message}`
+      }
     } finally {
       assistantMessage.streaming = false
       sending.value = false
+      activeController = null
     }
   }
 
-  function formatHistoryContent(message: ChatMessage) {
-    if (!message.draft || message.draft.operation === 'delete' || !message.draft.content) {
-      return message.content
-    }
-    return `${message.content}\n\n[AI_DRAFT operation="${message.draft.operation}" path="${message.draft.path}"]\n\`\`\`markdown\n${message.draft.content}\n\`\`\``
+  function stopGenerating() {
+    activeController?.abort()
   }
 
   async function readAiStream(response: Response, assistantMessage: ChatMessage) {
@@ -474,12 +519,76 @@
     message.toolCalls = [...steps]
   }
 
+  const DRAFT_MARKER_RE =
+    /\[DRAFT\s+op="(?:create|update|delete|organize)"(?:\s+path="[^"]+")?\]\s*(?:```(?:markdown|md|json)?\n[\s\S]*?```)?/i
+
+  function displayContent(message: ChatMessage) {
+    return renderMarkdown((message.content || '').replace(DRAFT_MARKER_RE, '').trim())
+  }
+
+  const draftOperationLabels: Record<Draft['operation'], string> = {
+    create: '新增文章',
+    update: '更新文章',
+    delete: '删除文章',
+    organize: '整理目录',
+  }
+
+  function draftOperationLabel(operation: Draft['operation']) {
+    return draftOperationLabels[operation]
+  }
+
+  function draftTargetLabel(draft: Draft) {
+    if (draft.operation === 'organize') {
+      const count = draft.actions?.length || 0
+      return count ? `知识库目录 · ${count} 项调整` : '知识库目录'
+    }
+    return draft.path
+  }
+
+  function draftActionLabel(draft: Draft) {
+    if (draft.operation === 'organize') return '确认整理'
+    if (draft.operation === 'create') return '确认新增'
+    if (draft.operation === 'delete') return '确认删除'
+    return '确认更新'
+  }
+
+  function canApplyDraft(draft: Draft) {
+    return draft.operation !== 'organize' || Boolean(draft.actions?.length)
+  }
+
+  function draftConfirmMessage(draft: Draft) {
+    if (draft.operation === 'organize') {
+      const count = draft.actions?.length || 0
+      return `确认整理知识库目录？\n将按草稿移动 ${count} 篇文章，并刷新左侧目录。`
+    }
+    if (draft.operation === 'delete') return `确认删除文章：${draft.path}？`
+    if (draft.operation === 'create') return `确认新增文章：${draft.path}？`
+    return `确认把这份草稿更新到文章：${draft.path}？`
+  }
+
   async function applyDraft(draft: Draft) {
-    const confirmed = window.confirm(`确认执行 ${draft.operation}：${draft.path}？`)
+    const confirmed = window.confirm(draftConfirmMessage(draft))
     if (!confirmed) return
-    const result = await api.applyDraft(draft)
-    await refreshTree()
-    if ('content' in result) await loadArticle(result.path)
+    applyingDraft.value = true
+    try {
+      const result = await api.applyDraft(draft)
+      await refreshTree()
+
+      if (draft.operation === 'organize') {
+        const movedActive = draft.actions?.find(action => action.from === activePath.value)
+        if (movedActive) await loadArticle(movedActive.to)
+        return
+      }
+
+      if (draft.operation === 'delete') {
+        if (activePath.value === draft.path) clearActiveArticle()
+        return
+      }
+
+      if ('content' in result) await loadArticle(result.path)
+    } finally {
+      applyingDraft.value = false
+    }
   }
 
   async function createUser() {

@@ -6,6 +6,7 @@ import { JsonStore, permissions } from './store.js'
 import {
   deleteArticle,
   listTree,
+  moveArticle,
   readArticle,
   relativeKnowledgeRoot,
   writeArticle,
@@ -209,6 +210,7 @@ async function route(req, res) {
         onTool: tool => sse(res, 'tool', tool),
         onReasoning: reasoning => sse(res, 'reasoning', { reasoning }),
         onDelta: delta => sse(res, 'delta', { delta }),
+        onError: error => sse(res, 'error', { message: error.message || 'AI 流式响应失败' }),
         onDone: reply => {
           store.mutate(data => {
             let conversation = data.conversations.find(item => item.id === conversationId)
@@ -270,6 +272,15 @@ async function route(req, res) {
       const result = deleteArticle(draft.path)
       audit(ctx.user.id, 'ai:delete', result)
       return json(res, 200, result)
+    }
+    if (draft.operation === 'organize') {
+      requirePermission(req, 'kb:update')
+      const actions = Array.isArray(draft.actions) ? draft.actions : []
+      const moved = actions
+        .filter(action => action.type === 'move' && action.from && action.to)
+        .map(action => moveArticle(action.from, action.to, action.title))
+      audit(ctx.user.id, 'ai:organize', { actions })
+      return json(res, 200, { path: moved[0]?.path || '', items: moved })
     }
     requirePermission(req, draft.operation === 'create' ? 'kb:create' : 'kb:update')
     const article = writeArticle(draft.path, draft.content)

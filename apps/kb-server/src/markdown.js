@@ -1,4 +1,13 @@
-import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  renameSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs'
 import { dirname, join, normalize, relative, sep } from 'node:path'
 import { config } from './config.js'
 
@@ -47,7 +56,9 @@ export function listTree(dir = config.knowledgeRoot, base = '') {
       }
     })
     .filter(Boolean)
-    .sort((a, b) => (a.type === b.type ? a.name.localeCompare(b.name) : a.type === 'directory' ? -1 : 1))
+    .sort((a, b) =>
+      a.type === b.type ? a.name.localeCompare(b.name) : a.type === 'directory' ? -1 : 1
+    )
 }
 
 export function readArticle(path) {
@@ -60,7 +71,9 @@ export function readArticle(path) {
   const stats = statSync(fullPath)
   return {
     path: clean,
-    title: readFileSync(fullPath, 'utf8').match(/^#\s+(.+)$/m)?.[1] || clean.split('/').pop().replace(/\.md$/, ''),
+    title:
+      readFileSync(fullPath, 'utf8').match(/^#\s+(.+)$/m)?.[1] ||
+      clean.split('/').pop().replace(/\.md$/, ''),
     content: readFileSync(fullPath, 'utf8'),
     updatedAt: stats.mtime.toISOString(),
   }
@@ -71,6 +84,35 @@ export function writeArticle(path, content) {
   mkdirSync(dirname(fullPath), { recursive: true })
   writeFileSync(fullPath, String(content || ''), 'utf8')
   return readArticle(clean)
+}
+
+export function moveArticle(fromPath, toPath, title) {
+  const from = resolveDocPath(fromPath)
+  const to = resolveDocPath(toPath)
+  if (from.clean === to.clean) return readArticle(from.clean)
+  if (!existsSync(from.fullPath)) {
+    const err = new Error(`源文章不存在：${from.clean}`)
+    err.status = 404
+    throw err
+  }
+  if (existsSync(to.fullPath)) {
+    const err = new Error(`目标文章已存在：${to.clean}`)
+    err.status = 409
+    throw err
+  }
+
+  mkdirSync(dirname(to.fullPath), { recursive: true })
+  renameSync(from.fullPath, to.fullPath)
+
+  if (title) {
+    const article = readArticle(to.clean)
+    const content = article.content.match(/^#\s+.+$/m)
+      ? article.content.replace(/^#\s+.+$/m, `# ${title}`)
+      : `# ${title}\n\n${article.content}`
+    writeArticle(to.clean, content)
+  }
+
+  return readArticle(to.clean)
 }
 
 export function deleteArticle(path) {

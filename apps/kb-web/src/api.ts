@@ -35,9 +35,15 @@ export type Article = {
 }
 
 export type Draft = {
-  operation: 'create' | 'update' | 'delete'
+  operation: 'create' | 'update' | 'delete' | 'organize'
   path: string
   content: string
+  actions?: {
+    type: 'move'
+    from: string
+    to: string
+    title?: string
+  }[]
 }
 
 export type SearchSource = {
@@ -104,7 +110,7 @@ export const api = {
       body: JSON.stringify(payload),
     }),
   applyDraft: (draft: Draft) =>
-    request<Article | { path: string }>('/api/ai/apply', {
+    request<Article | { path: string; items?: Article[] }>('/api/ai/apply', {
       method: 'POST',
       body: JSON.stringify({ draft }),
     }),
