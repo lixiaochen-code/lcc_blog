@@ -1,7 +1,7 @@
 # LCC 知识库 · 重构交接文档
 
 > 写给：以后接手这份项目的我（可能在另一台电脑上）。
-> 状态截止时间：2026-05-14。
+> 状态截止时间：2026-05-15（Step 5.4 完成、Step 5.5 待开始）。
 
 ---
 
@@ -22,11 +22,72 @@
 | 2   | UI 套 Linear 设计系统             | ✅ 已完成   | `apps/kb-web/src/styles.css`               |
 | 3   | AGENTS.md                         | ✅ 已完成   | 仓库根目录                                 |
 | 4   | NestJS 骨架 + config + store      | ✅ 已完成   | `apps/server/` 已建好，依赖已装             |
-| 5   | Auth + Users + Roles 模块         | 🟡 进行中   | jwt/guard/decorator/AuditModule 已写，**Auth/Users/Roles controller+service 未写** |
-| 6   | KB + Web (search/fetch/ingest)    | ⬜ 未开始   |                                            |
-| 7   | AI 模块（NestJS 版）+ 工具集      | ⬜ 未开始   |                                            |
-| 8   | 前端拆分 + 角色/用户管理 UI       | ⬜ 未开始   |                                            |
-| 9   | 脚本、清理、文档                  | ⬜ 未开始   | 删除旧 `apps/kb-server`、更新根 `package.json` |
+| 5.1 | Auth 模块（NestJS 版）            | ✅ 已完成   | login + me；contract 与旧版一致             |
+| 5.2 | Users 模块                        | ✅ 已完成   | REST `/api/admin/users/:id`；删自己 / 停用自己 / 移除全部角色都拒 |
+| 5.3 | Roles 模块                        | ✅ 已完成   | REST `/api/admin/roles/:id` + `/api/admin/permissions`；系统角色仅可改权限 |
+| 5.4 | KB 模块（NestJS 版）              | ✅ 已完成   | `apps/server/src/kb/*`，迁好旧 markdown.js + 关键词搜索 |
+| 5.5 | Web 模块（search/fetch/ingest）   | ⬜ 待开始   | 这是「AI 没法读 URL」问题的根因，下一步先做      |
+| 5.6 | AI 模块（NestJS 版）+ 工具集      | ⬜ 待开始   |                                            |
+| 5.7 | MCP 模块                          | ⬜ 待开始   |                                            |
+| 5.9 | 前端拆分 + 管理 UI 改造           | 🟡 部分完成 | 「账号与权限」页已重做（账号/角色 Tab + 权限矩阵 + 模态编辑器），其余还是单文件 App.vue |
+| 5.10| 切流量 + 清理旧 server            | 🟡 部分完成 | 根 `kb:server` 已切到新 server，旧 `apps/kb-server` 未删除 |
+
+> 切到新机后：第一件事就是 **Step 5.5（Web 模块）**。
+
+---
+
+## 1.1 跨机继续：在新电脑要做的事
+
+```bash
+git clone <repo> && cd lcc_blog
+git pull
+pnpm install                 # 含 apps/server，pnpm-workspace.yaml 已配
+cp .env.kb.example .env.kb   # 然后填 OPENAI_API_KEY 等
+```
+
+**`.env.kb` 注意点**：
+
+- `OPENAI_BASE_URL` 当前指向本地代理 `http://127.0.0.1:8317/v1`，模型别名 `gpt-5.4-mini`（不是
+  OpenAI 官方型号）。新机如果没起这个代理，要改回 `https://api.openai.com/v1` + 真实模型名，
+  或者在新机也起对应代理。
+- `KB_DATA_FILE` 默认 `apps/kb-server/data/dev-store.json`，新旧 server 共用，**别覆盖**：里面是
+  唯一的 `superadmin / Admin@123456`。
+
+**启动**：
+
+```bash
+pnpm kb:server   # 现在已经指向新 NestJS 后端（apps/server，端口 4010）
+pnpm kb:web      # vite，5173 → 代理 /api 到 :4010
+# 旧 server 想做对照时：pnpm kb:server:legacy
+```
+
+**验收当前状态**：
+
+- 登录 `superadmin / Admin@123456`。
+- 左侧目录树有内容（来自 `docs/knowledge/`）。
+- 顶部「管理」→ 账号 / 角色两个 Tab，新增/编辑/删除都能跑通；新建账号会展示一次明文密码。
+- AI 面板还在用**旧后端的逻辑**——新 NestJS 的 AI 模块还没建，所以面板里发消息会 404。这是预期。
+
+---
+
+## 1.2 已经做完的关键决策（接手前必读）
+
+1. **构建工具**：`apps/server` 用 `ts-node-dev`（不是 tsx）。esbuild 不发 decorator metadata，
+   Nest 的构造函数注入会全部炸，这点已踩过。`build` 走 `tsc`，`dev` 走 `ts-node-dev --respawn
+   --transpile-only --exit-child`。
+2. **包管理**：根 `pnpm-workspace.yaml` 已加 `apps/*`。`apps/server` 不再单独 `pnpm install`。
+3. **AuthGuard 注册**：用 `APP_GUARD` provider，**不要**再 `useGlobalGuards(app.get(AuthGuard))`，
+   后者拿到的实例不会被 DI 填进 Reflector / JwtService。
+4. **配置路径**：`apps/server/src/config/app.config.ts` 改成上溯找 `.env.kb` 定位 repo 根，
+   所有相对路径都基于 repo 根（不是 `process.cwd()`）。否则用 `pnpm --filter @lcc/server dev`
+   时会在 `apps/server/` 里创出空的 `docs/knowledge` 和 `apps/kb-server/data` 副本。
+5. **store 自愈**：`JsonStoreService.migrate()` 现在会确保 `r_super` 永远拥有全部 `PERMISSIONS`。
+   将来再加新权限项，老 dev-store 会自动补齐，不用手动 reseed。
+6. **`/api/auth/me` 返回 `null`**（显式 JSON `null`，不是空 body）：前端首屏探测 session 用，
+   不能 401。
+7. **新增账号管理 UI 前端契约**：`POST /api/admin/users`、`PUT /api/admin/users/:id`、
+   `DELETE /api/admin/users/:id`；角色同理；外加 `GET /api/admin/permissions` 返回
+   `{ groups: PERMISSION_GROUPS }`。`api.ts` 已经按这个写好了。
 
 ---
 
@@ -36,8 +97,8 @@
 apps/
   server/                            # 新：NestJS + TypeScript 后端
     src/
-      main.ts                        # ✅ 待写
-      app.module.ts                  # ✅ 待写
+      main.ts                        # ✅ 已写
+      app.module.ts                  # ✅ 已写
       common/
         auth-context.ts              # ✅ 已写
         auth-context.service.ts      # ✅ 已写
@@ -54,34 +115,35 @@ apps/
         utils/
           password.ts                # ✅ 已写
       config/
-        app.config.ts                # ✅ 已写
+        app.config.ts                # ✅ 已写（已修：上溯找 .env.kb 定位 repo 根）
         config.module.ts             # ✅ 已写（提供 APP_CONFIG token）
       store/
         store.types.ts               # ✅ 已写
-        json-store.service.ts        # ✅ 已写（含 migrate()，可换 MySQL）
+        json-store.service.ts        # ✅ 已写（含 migrate()，含 r_super 权限自愈）
         store.module.ts              # ✅ 已写
       auth/
         jwt.service.ts               # ✅ 已写
-        auth.service.ts              # ⬜ 待写
-        auth.controller.ts           # ⬜ 待写
-        dto/login.dto.ts             # ⬜ 待写
-        auth.module.ts               # ⬜ 待写
+        auth.service.ts              # ✅ 已写
+        auth.controller.ts           # ✅ 已写（/login + /me）
+        dto/login.dto.ts             # ✅ 已写
+        auth.module.ts               # ✅ 已写
       users/
-        users.service.ts             # ⬜ 待写
-        users.controller.ts          # ⬜ 待写
-        dto/{create,update}-user.dto.ts # ⬜ 待写
-        users.module.ts              # ⬜ 待写
+        users.service.ts             # ✅ 已写
+        users.controller.ts          # ✅ 已写（REST `/api/admin/users/:id`）
+        dto/{create,update}-user.dto.ts # ✅ 已写
+        users.module.ts              # ✅ 已写
       roles/
-        roles.service.ts             # ⬜ 待写
-        roles.controller.ts          # ⬜ 待写
-        dto/{create,update}-role.dto.ts # ⬜ 待写
-        roles.module.ts              # ⬜ 待写
+        roles.service.ts             # ✅ 已写
+        roles.controller.ts          # ✅ 已写（含 `/api/admin/permissions`）
+        dto/{create,update}-role.dto.ts # ✅ 已写
+        roles.module.ts              # ✅ 已写
       kb/
-        kb.service.ts                # ⬜ 待写（filesystem CRUD + path safety）
-        kb-search.service.ts         # ⬜ 待写（关键词召回，可后续升级为 embedding）
-        kb.controller.ts             # ⬜ 待写
-        dto/                         # ⬜ 待写
-        kb.module.ts                 # ⬜ 待写
+        kb.types.ts                  # ✅ 已写
+        kb.service.ts                # ✅ 已写（filesystem CRUD + path safety）
+        kb-search.service.ts         # ✅ 已写（关键词召回，可后续升级为 embedding）
+        kb.controller.ts             # ✅ 已写
+        dto/{upsert-article,move-article}.dto.ts # ✅ 已写
+        kb.module.ts                 # ✅ 已写
       web/
         web-search.service.ts        # ⬜ 待写（迁移 mcp.js 的 DDG/Bing）
         web-fetch.service.ts         # ⬜ 待写（fetch + 简易 readability）
@@ -117,12 +179,13 @@ apps/
         audit.controller.ts          # ✅ 已写
         audit.module.ts              # ✅ 已写
     data/                            # ⬜ 待复制（沿用旧的 dev-store.json，下文 §6）
-    package.json                     # ✅ 已写（依赖已安装）
+    package.json                     # ✅ 已写（已切到 ts-node-dev）
     tsconfig.json                    # ✅ 已写
   kb-web/                            # 前端，保留
     src/
-      App.vue                        # 待拆分
-      components/                    # 待新建
+      App.vue                        # 🟡 单文件，账号/角色管理已重做；其余还没拆
+      api.ts                         # ✅ 已对齐新后端契约
+      components/                    # ⬜ 待拆出
         Workspace.vue
         AiPanel.vue
         AdminPanel.vue
@@ -134,7 +197,7 @@ apps/
         useSession.ts
         useKb.ts
         useAi.ts
-      api/
+      api/                           # ⬜ 待拆（目前都在 api.ts 里）
         index.ts
         auth.api.ts
         kb.api.ts
@@ -142,11 +205,12 @@ apps/
         admin.api.ts
         web.api.ts
       markdown.ts
-      styles.css                     # ✅ 已套 Linear
-  kb-server/                         # 旧 JS 后端 —— 全部任务完成后删除
+      styles.css                     # ✅ 已套 Linear（含 Admin v2 块）
+  kb-server/                         # 🟡 旧 JS 后端，仍可用 `pnpm kb:server:legacy` 起；最终要删
 docs/
   knowledge/                         # 内容
   kb-architecture.md                 # 完成后更新
+pnpm-workspace.yaml                  # ✅ 已加（packages: ['apps/*']）
 HANDOVER.md                          # ← 你正在看的这个
 AGENTS.md                            # ✅ 已写
 ```
@@ -155,23 +219,33 @@ AGENTS.md                            # ✅ 已写
 
 ## 3. 已经写好的代码，下面这些**别动**
 
-- `apps/server/package.json` —— 依赖已 `pnpm install` 完成。
+- `apps/server/package.json` —— 依赖已 `pnpm install` 完成；`dev` 已切到 `ts-node-dev`（**不要**换回 `tsx`）。
 - `apps/server/tsconfig.json` —— `experimentalDecorators` + `emitDecoratorMetadata` 都开了。
-- `apps/server/src/config/*` —— 加载 `.env.kb`、提供 `APP_CONFIG` DI token。
-- `apps/server/src/store/*` —— `JsonStoreService` 已带 `migrate()`，**新字段加在 `store.types.ts` + `buildInitialStore()` + `migrate()` 三处**即可。
+- `apps/server/src/config/*` —— 加载 `.env.kb`、提供 `APP_CONFIG` DI token；路径基于 repo 根（上溯找 `.env.kb`），**别改回 `process.cwd()`**。
+- `apps/server/src/store/*` —— `JsonStoreService` 已带 `migrate()`（含 r_super 自愈），**新字段加在 `store.types.ts` + `buildInitialStore()` + `migrate()` 三处**即可。
 - `apps/server/src/common/*` —— 鉴权基础设施全在这（permissions / AuthContext / AuthGuard / 装饰器）。
-- `apps/server/src/auth/jwt.service.ts` —— HS256 JWT 签发/校验，7 天 TTL。
+- `apps/server/src/auth/*` —— jwt + login/me；`/api/auth/me` 显式回 JSON `null`，前端首屏需要。
+- `apps/server/src/users/*`、`apps/server/src/roles/*` —— Step 5.2 / 5.3 完整 CRUD，含「不能删自己 / 不能停用自己 / 系统角色仅可改权限」等防御。
+- `apps/server/src/kb/*` —— Step 5.4，路径安全走 `assertSafePath`，**任何新功能也走它**。
 - `apps/server/src/audit/*` —— 日志服务、`audit:view` 权限的查看接口。
 - `apps/server/src/common/utils/password.ts` —— pbkdf2 + 16 字节盐。
+- `apps/server/src/app.module.ts` —— 已用 `APP_GUARD` 注册 `AuthGuard`；**不要**改成 `useGlobalGuards()`。
+- `pnpm-workspace.yaml` —— `apps/*`，新机别忘记。
+- `apps/kb-web/src/api.ts` —— 已对齐新后端契约（`PUT /admin/users/:id`、`/admin/permissions { groups }` 等）。
 
 ⚠️ **不要把旧仓库里的 `dev-store.json` 删掉**：里面已经有 `superadmin / Admin@123456`。
 新 server 默认还指向 `apps/kb-server/data/dev-store.json`（见 `app.config.ts`），保留兼容。
+
+⚠️ **不要清 `docs/knowledge/` 里的内容**——AI 模块没建之前已经手动写过几篇，是用户的实际笔记。
 
 ---
 
 ## 4. 下一步要做什么（按顺序，每一步都让 lint/type-check/build 过）
 
-### Step 5.1 · Auth 模块（先做这个）
+> **接手须知**：5.1 / 5.2 / 5.3 / 5.4 已完成，下面那几节当**实现回顾**看就行。
+> **真正要从这里开始**：跳到 **Step 5.5**。
+
+### Step 5.1 · Auth 模块（先做这个）  ✅ 已完成
 
 文件：
 
@@ -186,7 +260,7 @@ POST /api/auth/login → { token, user: AuthContext }
 GET  /api/auth/me   → AuthContext | null
 ```
 
-### Step 5.2 · Users 模块
+### Step 5.2 · Users 模块  ✅ 已完成
 
 - `users.service.ts`：`list()` / `create(dto)` / `update(id, dto)` / `resetPassword(id)` / `remove(id, currentUserId)`。
   - **`remove` 不允许删自己**（带 `currentUserId` 防御）。
@@ -201,7 +275,7 @@ GET  /api/auth/me   → AuthContext | null
   ```
 - DTO：`CreateUserDto { username, password?, roleIds[] }`，`UpdateUserDto { roleIds?, disabled?, resetPassword? }`。
 
-### Step 5.3 · Roles 模块
+### Step 5.3 · Roles 模块  ✅ 已完成
 
 - `roles.service.ts`：`list()` / `create(dto)` / `update(id, dto)` / `remove(id)`；
   **系统角色（`system: true`）不能改 `permissions` 之外的字段、不能删**。
@@ -214,7 +288,7 @@ GET  /api/auth/me   → AuthContext | null
   GET    /api/admin/permissions           → role:assign  （返回 PERMISSION_GROUPS）
   ```
 
-### Step 5.4 · KB 模块（迁移 + 增强）
+### Step 5.4 · KB 模块（迁移 + 增强）  ✅ 已完成
 
 复用旧 `apps/kb-server/src/markdown.js` 的逻辑，**改成 TS**：
 
@@ -234,7 +308,12 @@ GET  /api/auth/me   → AuthContext | null
   GET    /api/kb/search?q=     → kb:view
   ```
 
-### Step 5.5 · Web 模块（搜索 + 抓取 + ingest）
+### Step 5.5 · Web 模块（搜索 + 抓取 + ingest）  ⬅️ **从这里开始**
+
+> **为什么这是下一步**：用户最近一次会话给了 GitHub README 的 URL，AI 没法读，只能凭仓库名瞎
+> 总结。根因不是模型，是**当前 AI pipeline 物理上没有 `web_fetch` 工具**——只有 `web_search`，
+> 且后者走 DDG/Bing 搜索接口，不会拿正文。先把 web-fetch 这一件做出来，AI 模块（5.6）一接就能
+> 解锁「贴 URL → 抓 → 总结 → 草稿」这条主路。
 
 - `web-search.service.ts`：迁移旧 `mcp.js` 的 DDG / Bing 兜底逻辑，**支持 MCP HTTP endpoint 优先**。
 - `web-fetch.service.ts`：
@@ -437,18 +516,20 @@ OPENAI_MODEL=gpt-4o-mini
 ### 开发命令
 
 ```bash
-pnpm kb:server   # 启动后端（当前还是旧 JS，切到新 NestJS 后路径会变）
-pnpm kb:web      # 启动前端 Vite
-pnpm type-check  # vue-tsc
-pnpm lint        # eslint --fix
-pnpm format      # prettier
-pnpm kb:build    # 前端 production build
+pnpm kb:server         # 启动后端（已切到 apps/server，NestJS + ts-node-dev）
+pnpm kb:server:legacy  # 旧 JS 后端，对照用，端口冲突时别同时起
+pnpm kb:web            # 启动前端 Vite（5173），代理 /api → :4010
+pnpm type-check        # vue-tsc
+pnpm lint              # eslint --fix
+pnpm format            # prettier
+pnpm kb:build          # 前端 production build
+pnpm kb:server:build   # 新后端 tsc 构建
 ```
 
-新 server 独立命令（任务做完前可用来本地试）：
+新 server 独立命令：
 
 ```bash
-pnpm --filter @lcc/server dev      # tsx watch
+pnpm --filter @lcc/server dev      # ts-node-dev（带 --respawn --transpile-only）
 pnpm --filter @lcc/server build    # tsc
 ```
 
