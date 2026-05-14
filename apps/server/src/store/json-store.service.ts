@@ -109,12 +109,27 @@ export class JsonStoreService {
   // Forward-compatible: add new fields without rewriting existing stores.
   private migrate(raw: Partial<StoreData>): StoreData {
     const initial = buildInitialStore()
-    return {
+    const data: StoreData = {
       users: raw.users ?? initial.users,
       roles: raw.roles ?? initial.roles,
       conversations: raw.conversations ?? [],
       mcpServers: raw.mcpServers ?? initial.mcpServers,
       auditLogs: raw.auditLogs ?? [],
     }
+
+    // Self-heal: ensure the superadmin role always carries every known
+    // permission. Without this, legacy stores accumulate over time and
+    // new permissions like `kb:move` silently 403 on the seed account.
+    const superRole = data.roles.find(role => role.id === 'r_super')
+    if (superRole) {
+      const current = new Set<Permission>(superRole.permissions)
+      const missing = (PERMISSIONS as readonly Permission[]).filter(p => !current.has(p))
+      if (missing.length) {
+        superRole.permissions = [...PERMISSIONS] as Permission[]
+        superRole.updatedAt = now()
+      }
+    }
+
+    return data
   }
 }

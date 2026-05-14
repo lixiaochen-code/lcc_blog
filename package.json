@@ -4,11 +4,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "kb:server": "node apps/kb-server/src/server.js",
+    "kb:server": "pnpm --filter @lcc/server dev",
+    "kb:server:legacy": "node apps/kb-server/src/server.js",
+    "kb:server:build": "pnpm --filter @lcc/server build",
     "kb:web": "vite --config apps/kb-web/vite.config.ts --host 0.0.0.0",
     "kb:build": "vite build --config apps/kb-web/vite.config.ts",
     "type-check": "vue-tsc --noEmit -p tsconfig.json",
-    "lint": "eslint apps/kb-web apps/kb-server --fix",
+    "lint": "eslint apps/kb-web apps/kb-server apps/server --fix",
     "format": "prettier --write .",
     "prepare": "husky"
   },

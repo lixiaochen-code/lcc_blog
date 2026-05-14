@@ -4,6 +4,8 @@ export type Role = {
   description: string
   permissions: string[]
   system?: boolean
+  createdAt?: string
+  updatedAt?: string
 }
 
 export type User = {
@@ -11,6 +13,13 @@ export type User = {
   username: string
   roleIds: string[]
   disabled: boolean
+  createdAt?: string
+  updatedAt?: string
+}
+
+export type PermissionGroup = {
+  name: string
+  permissions: string[]
 }
 
 export type SessionUser = {
@@ -67,9 +76,13 @@ async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
       ...options.headers,
     },
   })
-  const data = await response.json().catch(() => ({}))
-  if (!response.ok) throw new Error(data.message || '请求失败')
-  return data
+  const text = await response.text()
+  const data = text ? JSON.parse(text) : null
+  if (!response.ok) {
+    const message = (data && (data.message || data.error)) || `请求失败 (${response.status})`
+    throw new Error(Array.isArray(message) ? message.join('；') : message)
+  }
+  return data as T
 }
 
 export const api = {
@@ -79,6 +92,7 @@ export const api = {
       body: JSON.stringify({ username, password }),
     }),
   me: () => request<SessionUser | null>('/api/auth/me'),
+
   tree: () => request<{ items: TreeItem[] }>('/api/kb/tree'),
   article: (path: string) => request<Article>(`/api/kb/article?path=${encodeURIComponent(path)}`),
   createArticle: (path: string, content: string) =>
@@ -92,6 +106,7 @@ export const api = {
     request<{ path: string }>(`/api/kb/article?path=${encodeURIComponent(path)}`, {
       method: 'DELETE',
     }),
+
   chat: (payload: {
     message: string
     history: { role: string; content: string }[]
@@ -114,11 +129,38 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ draft }),
     }),
+
+  // ----- Admin: roles & permissions -----
+  permissionGroups: () => request<{ groups: PermissionGroup[] }>('/api/admin/permissions'),
   roles: () => request<{ items: Role[] }>('/api/admin/roles'),
+  createRole: (payload: { name: string; description?: string; permissions: string[] }) =>
+    request<Role>('/api/admin/roles', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  updateRole: (id: string, payload: Partial<Pick<Role, 'name' | 'description' | 'permissions'>>) =>
+    request<Role>(`/api/admin/roles/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
+  deleteRole: (id: string) =>
+    request<{ id: string }>(`/api/admin/roles/${id}`, { method: 'DELETE' }),
+
+  // ----- Admin: users -----
   users: () => request<{ items: User[] }>('/api/admin/users'),
-  createUser: (payload: { username: string; roleIds: string[] }) =>
+  createUser: (payload: { username: string; password?: string; roleIds: string[] }) =>
     request<{ user: User; password: string }>('/api/admin/users', {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
+  updateUser: (
+    id: string,
+    payload: { roleIds?: string[]; disabled?: boolean; resetPassword?: boolean }
+  ) =>
+    request<{ user: User; password?: string }>(`/api/admin/users/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
+  deleteUser: (id: string) =>
+    request<{ id: string }>(`/api/admin/users/${id}`, { method: 'DELETE' }),
 }

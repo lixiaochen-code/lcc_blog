@@ -14,7 +14,7 @@ const commonGlobals = {
 
 export default [
   {
-    ignores: ['node_modules', 'dist', '.output', '*.config.js', '*.cjs'],
+    ignores: ['node_modules', 'dist', '**/dist/**', '.output', '*.config.js', '*.cjs'],
   },
 
   // Base JS

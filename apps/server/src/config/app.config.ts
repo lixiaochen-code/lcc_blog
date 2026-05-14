@@ -1,8 +1,28 @@
 import { existsSync, readFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { dirname, isAbsolute, join, resolve } from 'node:path'
+
+/**
+ * Walk up from cwd looking for `.env.kb`. Whichever directory holds it
+ * IS the repo root — every relative path in the env file resolves
+ * against that root, not the current process cwd. Without this, running
+ * the server from a workspace subdir (`pnpm --filter @lcc/server dev`,
+ * cwd = `apps/server`) would silently spawn empty `docs/knowledge` and
+ * `apps/kb-server/data/` siblings inside the workspace package.
+ */
+const findRepoRoot = (): string => {
+  let dir = process.cwd()
+  while (true) {
+    if (existsSync(join(dir, '.env.kb')) || existsSync(join(dir, '.env.kb.example'))) return dir
+    const parent = dirname(dir)
+    if (parent === dir) return process.cwd()
+    dir = parent
+  }
+}
+
+const REPO_ROOT = findRepoRoot()
 
 const loadEnvFile = () => {
-  const envFile = join(process.cwd(), '.env.kb')
+  const envFile = join(REPO_ROOT, '.env.kb')
   if (!existsSync(envFile)) return
   for (const line of readFileSync(envFile, 'utf8').split(/\r?\n/)) {
     const trimmed = line.trim()
@@ -19,12 +39,18 @@ const loadEnvFile = () => {
 
 loadEnvFile()
 
+/** Resolve a path against the repo root unless it's already absolute. */
+const resolveFromRoot = (value: string | undefined, fallback: string): string => {
+  const candidate = value ?? fallback
+  return isAbsolute(candidate) ? candidate : resolve(REPO_ROOT, candidate)
+}
+
 export const appConfig = {
+  repoRoot: REPO_ROOT,
   port: Number(process.env.KB_SERVER_PORT || 4010),
   jwtSecret: process.env.KB_JWT_SECRET || 'kb-dev-secret-change-me',
-  knowledgeRoot: process.env.KB_MARKDOWN_ROOT || join(process.cwd(), 'docs', 'knowledge'),
-  dataFile:
-    process.env.KB_DATA_FILE || join(process.cwd(), 'apps', 'kb-server', 'data', 'dev-store.json'),
+  knowledgeRoot: resolveFromRoot(process.env.KB_MARKDOWN_ROOT, 'docs/knowledge'),
+  dataFile: resolveFromRoot(process.env.KB_DATA_FILE, 'apps/kb-server/data/dev-store.json'),
   openai: {
     baseUrl: process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1',
     apiKey: process.env.OPENAI_API_KEY || '',

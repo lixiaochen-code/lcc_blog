@@ -53,41 +53,128 @@
             <h1>账号与权限</h1>
           </div>
 
-          <div class="admin-grid">
-            <section class="admin-section">
-              <div class="section-title">
-                <h2>账号</h2>
-                <button v-if="can('user:create')" @click="createUser">新增账号</button>
-              </div>
-              <div class="data-table">
-                <div class="table-row table-head">
-                  <span>账号</span>
-                  <span>角色</span>
-                  <span>状态</span>
-                </div>
-                <div v-for="user in users" :key="user.id" class="table-row">
-                  <span>{{ user.username }}</span>
-                  <span>{{ roleNames(user.roleIds) }}</span>
-                  <span>{{ user.disabled ? '禁用' : '启用' }}</span>
-                </div>
-              </div>
-            </section>
-
-            <section class="admin-section">
-              <div class="section-title">
-                <h2>角色权限</h2>
-              </div>
-              <div v-for="role in roles" :key="role.id" class="role-block">
-                <strong>{{ role.name }}</strong>
-                <p>{{ role.description }}</p>
-                <div class="permission-list">
-                  <span v-for="permission in role.permissions" :key="permission">{{
-                    permission
-                  }}</span>
-                </div>
-              </div>
-            </section>
+          <div class="admin-tabs">
+            <button
+              :class="{ active: adminTab === 'users' }"
+              type="button"
+              @click="adminTab = 'users'"
+            >
+              账号
+              <span class="tab-count">{{ users.length }}</span>
+            </button>
+            <button
+              :class="{ active: adminTab === 'roles' }"
+              type="button"
+              @click="adminTab = 'roles'"
+            >
+              角色
+              <span class="tab-count">{{ roles.length }}</span>
+            </button>
           </div>
+
+          <p v-if="adminError" class="error">{{ adminError }}</p>
+
+          <!-- USERS TAB -->
+          <section v-if="adminTab === 'users'" class="admin-block">
+            <div class="block-toolbar">
+              <div>
+                <h2>账号</h2>
+                <p class="block-hint">管理可登录的账号、为其分配角色，或重置密码。</p>
+              </div>
+              <button v-if="can('user:create')" class="primary" @click="openCreateUser">
+                新增账号
+              </button>
+            </div>
+
+            <div class="data-card">
+              <div class="data-row data-head">
+                <span>账号</span>
+                <span>角色</span>
+                <span>状态</span>
+                <span>操作</span>
+              </div>
+              <div v-if="!users.length" class="data-empty">暂无账号</div>
+              <div v-for="user in users" :key="user.id" class="data-row">
+                <div class="cell-user">
+                  <span class="avatar">{{ user.username.slice(0, 2).toUpperCase() }}</span>
+                  <div>
+                    <strong>{{ user.username }}</strong>
+                    <small v-if="user.id === session?.user.id">当前登录</small>
+                  </div>
+                </div>
+                <div class="cell-roles">
+                  <span v-for="roleId in user.roleIds" :key="roleId" class="role-chip">
+                    {{ roleNameOf(roleId) }}
+                  </span>
+                  <span v-if="!user.roleIds.length" class="muted">未分配</span>
+                </div>
+                <div class="cell-status">
+                  <span class="status-dot" :class="user.disabled ? 'off' : 'on'" />
+                  {{ user.disabled ? '已停用' : '启用中' }}
+                </div>
+                <div class="cell-actions">
+                  <button v-if="can('user:update')" @click="openEditUser(user)">编辑</button>
+                  <button
+                    v-if="can('user:delete') && user.id !== session?.user.id"
+                    class="danger"
+                    @click="removeUser(user)"
+                  >
+                    删除
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ROLES TAB -->
+          <section v-else class="admin-block">
+            <div class="block-toolbar">
+              <div>
+                <h2>角色</h2>
+                <p class="block-hint">每个角色对应一组权限。系统角色（超管/编辑/只读）不可删除。</p>
+              </div>
+              <button v-if="can('role:create')" class="primary" @click="openCreateRole">
+                新增角色
+              </button>
+            </div>
+
+            <div v-if="!permissionGroups.length" class="data-empty">权限元数据加载中…</div>
+            <div v-else class="role-grid">
+              <article
+                v-for="role in roles"
+                :key="role.id"
+                class="role-card"
+                :class="{ 'is-system': role.system }"
+              >
+                <header>
+                  <div>
+                    <strong>{{ role.name }}</strong>
+                    <span v-if="role.system" class="badge">系统</span>
+                  </div>
+                  <div class="role-card-actions">
+                    <button v-if="can('role:update')" @click="openEditRole(role)">编辑</button>
+                    <button
+                      v-if="can('role:delete') && !role.system"
+                      class="danger"
+                      @click="removeRole(role)"
+                    >
+                      删除
+                    </button>
+                  </div>
+                </header>
+                <p>{{ role.description || '—' }}</p>
+                <div class="permission-summary">
+                  <span class="muted">{{ role.permissions.length }} 项权限</span>
+                  <div class="permission-chips">
+                    <span v-for="p in role.permissions.slice(0, 6)" :key="p">{{ p }}</span>
+                    <span v-if="role.permissions.length > 6" class="more">
+                      +{{ role.permissions.length - 6 }}
+                    </span>
+                  </div>
+                </div>
+              </article>
+            </div>
+          </section>
         </section>
 
         <section v-else-if="!session" class="welcome">
@@ -246,13 +333,179 @@
         <small>默认超管：superadmin / Admin@123456</small>
       </form>
     </div>
+
+    <!-- USER EDITOR -->
+    <div v-if="userModal.open" class="modal-backdrop" @click.self="closeUserModal">
+      <form class="admin-modal" @submit.prevent="submitUser">
+        <header>
+          <h2>{{ userModal.mode === 'create' ? '新增账号' : '编辑账号' }}</h2>
+          <button type="button" class="plain icon" aria-label="关闭" @click="closeUserModal">
+            ×
+          </button>
+        </header>
+
+        <div class="modal-body">
+          <label class="field">
+            <span>用户名</span>
+            <input
+              v-model="userModal.form.username"
+              :disabled="userModal.mode === 'edit'"
+              autocomplete="off"
+              placeholder="例如 alice"
+              required
+            />
+          </label>
+
+          <fieldset class="field">
+            <legend>角色</legend>
+            <p v-if="!roles.length" class="muted">暂无可选角色</p>
+            <div v-else class="check-grid">
+              <label v-for="role in roles" :key="role.id" class="check-row">
+                <input
+                  type="checkbox"
+                  :value="role.id"
+                  :checked="userModal.form.roleIds.includes(role.id)"
+                  @change="toggleUserRole(role.id, ($event.target as HTMLInputElement).checked)"
+                />
+                <div>
+                  <strong>{{ role.name }}</strong>
+                  <small>{{ role.description || '—' }}</small>
+                </div>
+              </label>
+            </div>
+          </fieldset>
+
+          <label v-if="userModal.mode === 'edit'" class="check-row standalone">
+            <input v-model="userModal.form.disabled" type="checkbox" />
+            <div>
+              <strong>停用账号</strong>
+              <small>停用后该账号无法登录</small>
+            </div>
+          </label>
+
+          <label v-if="userModal.mode === 'edit'" class="check-row standalone">
+            <input v-model="userModal.form.resetPassword" type="checkbox" />
+            <div>
+              <strong>重置密码</strong>
+              <small>勾选后保存时生成新密码</small>
+            </div>
+          </label>
+
+          <div v-if="userModal.issuedPassword" class="issued-password">
+            <strong>初始密码</strong>
+            <code>{{ userModal.issuedPassword }}</code>
+            <p>密码仅显示一次，请立即妥善保管。</p>
+          </div>
+
+          <p v-if="userModal.error" class="error">{{ userModal.error }}</p>
+        </div>
+
+        <footer>
+          <button type="button" class="ghost" @click="closeUserModal">
+            {{ userModal.issuedPassword ? '关闭' : '取消' }}
+          </button>
+          <button v-if="!userModal.issuedPassword" class="primary" :disabled="userModal.busy">
+            {{ userModal.busy ? '保存中…' : '保存' }}
+          </button>
+        </footer>
+      </form>
+    </div>
+
+    <!-- ROLE EDITOR -->
+    <div v-if="roleModal.open" class="modal-backdrop" @click.self="closeRoleModal">
+      <form class="admin-modal wide" @submit.prevent="submitRole">
+        <header>
+          <h2>
+            {{ roleModal.mode === 'create' ? '新增角色' : '编辑角色' }}
+            <span v-if="roleModal.form.system" class="badge">系统</span>
+          </h2>
+          <button type="button" class="plain icon" aria-label="关闭" @click="closeRoleModal">
+            ×
+          </button>
+        </header>
+
+        <div class="modal-body">
+          <label class="field">
+            <span>名称</span>
+            <input
+              v-model="roleModal.form.name"
+              :disabled="roleModal.form.system"
+              placeholder="例如 编辑"
+              required
+            />
+            <small v-if="roleModal.form.system">系统角色不可改名</small>
+          </label>
+
+          <label class="field">
+            <span>描述</span>
+            <input
+              v-model="roleModal.form.description"
+              :disabled="roleModal.form.system"
+              placeholder="一句话说明这个角色的职责"
+            />
+            <small v-if="roleModal.form.system">系统角色不可改描述</small>
+          </label>
+
+          <fieldset class="field">
+            <legend>
+              权限
+              <span class="muted">{{ roleModal.form.permissions.length }} 项已选</span>
+            </legend>
+            <div v-if="!permissionGroups.length" class="muted">权限元数据加载中…</div>
+            <div v-else class="permission-matrix">
+              <section v-for="group in permissionGroups" :key="group.name">
+                <header>
+                  <strong>{{ group.name }}</strong>
+                  <button
+                    type="button"
+                    class="plain"
+                    @click="toggleGroupPermissions(group.permissions)"
+                  >
+                    {{ allSelected(group.permissions) ? '全部取消' : '全部勾选' }}
+                  </button>
+                </header>
+                <div class="check-grid">
+                  <label v-for="p in group.permissions" :key="p" class="check-row compact">
+                    <input
+                      type="checkbox"
+                      :value="p"
+                      :checked="roleModal.form.permissions.includes(p)"
+                      @change="toggleRolePermission(p, ($event.target as HTMLInputElement).checked)"
+                    />
+                    <code>{{ p }}</code>
+                  </label>
+                </div>
+              </section>
+            </div>
+          </fieldset>
+
+          <p v-if="roleModal.error" class="error">{{ roleModal.error }}</p>
+        </div>
+
+        <footer>
+          <button type="button" class="ghost" @click="closeRoleModal">取消</button>
+          <button class="primary" :disabled="roleModal.busy">
+            {{ roleModal.busy ? '保存中…' : '保存' }}
+          </button>
+        </footer>
+      </form>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-  import { computed, defineComponent, h, onMounted, ref, type VNode } from 'vue'
+  import { computed, defineComponent, h, onMounted, reactive, ref, type VNode } from 'vue'
   import { api, clearToken, getToken, setToken } from './api'
-  import type { Article, Draft, Role, SearchSource, SessionUser, TreeItem, User } from './api'
+  import type {
+    Article,
+    Draft,
+    PermissionGroup,
+    Role,
+    SearchSource,
+    SessionUser,
+    TreeItem,
+    User,
+  } from './api'
   import { renderMarkdown } from './markdown'
 
   const TreeList = defineComponent({
@@ -312,8 +565,11 @@
   const loginOpen = ref(false)
   const error = ref('')
   const viewMode = ref<'read' | 'admin'>('read')
+  const adminTab = ref<'users' | 'roles'>('users')
+  const adminError = ref('')
   const roles = ref<Role[]>([])
   const users = ref<User[]>([])
+  const permissionGroups = ref<PermissionGroup[]>([])
   const messages = ref<ChatMessage[]>([])
   const prompt = ref('')
   const sending = ref(false)
@@ -332,8 +588,17 @@
   }
 
   async function refreshAdmin() {
-    if (can('role:assign')) roles.value = (await api.roles()).items
-    if (can('user:update')) users.value = (await api.users()).items
+    adminError.value = ''
+    try {
+      if (can('role:assign')) {
+        const [rolesResp, permResp] = await Promise.all([api.roles(), api.permissionGroups()])
+        roles.value = rolesResp.items
+        permissionGroups.value = permResp.groups
+      }
+      if (can('user:update')) users.value = (await api.users()).items
+    } catch (err) {
+      adminError.value = err instanceof Error ? err.message : '加载失败'
+    }
   }
 
   async function loadArticle(path: string) {
@@ -591,18 +856,244 @@
     }
   }
 
-  async function createUser() {
-    const username = window.prompt('请输入新账号名')
-    if (!username) return
-    const readerRole =
-      roles.value.find(role => role.permissions.includes('kb:view')) || roles.value[0]
-    const result = await api.createUser({ username, roleIds: readerRole ? [readerRole.id] : [] })
-    window.alert(`账号已创建\n用户名：${result.user.username}\n初始密码：${result.password}`)
-    await refreshAdmin()
+  // ---- Admin: users ----
+  type UserModalState = {
+    open: boolean
+    mode: 'create' | 'edit'
+    targetId: string
+    form: {
+      username: string
+      roleIds: string[]
+      disabled: boolean
+      resetPassword: boolean
+    }
+    busy: boolean
+    error: string
+    issuedPassword: string
   }
 
-  function roleNames(roleIds: string[]) {
-    return roleIds.map(id => roles.value.find(role => role.id === id)?.name || id).join('、')
+  const userModal = reactive<UserModalState>({
+    open: false,
+    mode: 'create',
+    targetId: '',
+    form: { username: '', roleIds: [], disabled: false, resetPassword: false },
+    busy: false,
+    error: '',
+    issuedPassword: '',
+  })
+
+  function defaultRoleIds(): string[] {
+    const reader = roles.value.find(role => role.permissions.includes('kb:view') && !role.system)
+    if (reader) return [reader.id]
+    const fallback = roles.value.find(role => !role.system) || roles.value[0]
+    return fallback ? [fallback.id] : []
+  }
+
+  function openCreateUser() {
+    userModal.mode = 'create'
+    userModal.targetId = ''
+    userModal.form = {
+      username: '',
+      roleIds: defaultRoleIds(),
+      disabled: false,
+      resetPassword: false,
+    }
+    userModal.error = ''
+    userModal.issuedPassword = ''
+    userModal.open = true
+  }
+
+  function openEditUser(user: User) {
+    userModal.mode = 'edit'
+    userModal.targetId = user.id
+    userModal.form = {
+      username: user.username,
+      roleIds: [...user.roleIds],
+      disabled: user.disabled,
+      resetPassword: false,
+    }
+    userModal.error = ''
+    userModal.issuedPassword = ''
+    userModal.open = true
+  }
+
+  function closeUserModal() {
+    userModal.open = false
+  }
+
+  function toggleUserRole(roleId: string, checked: boolean) {
+    const set = new Set(userModal.form.roleIds)
+    if (checked) set.add(roleId)
+    else set.delete(roleId)
+    userModal.form.roleIds = [...set]
+  }
+
+  async function submitUser() {
+    if (!userModal.form.username.trim()) {
+      userModal.error = '请输入用户名'
+      return
+    }
+    if (!userModal.form.roleIds.length) {
+      userModal.error = '至少选择一个角色'
+      return
+    }
+    userModal.busy = true
+    userModal.error = ''
+    try {
+      if (userModal.mode === 'create') {
+        const result = await api.createUser({
+          username: userModal.form.username.trim(),
+          roleIds: userModal.form.roleIds,
+        })
+        userModal.issuedPassword = result.password
+      } else {
+        const result = await api.updateUser(userModal.targetId, {
+          roleIds: userModal.form.roleIds,
+          disabled: userModal.form.disabled,
+          resetPassword: userModal.form.resetPassword,
+        })
+        if (result.password) userModal.issuedPassword = result.password
+        else userModal.open = false
+      }
+      await refreshAdmin()
+    } catch (err) {
+      userModal.error = err instanceof Error ? err.message : '保存失败'
+    } finally {
+      userModal.busy = false
+    }
+  }
+
+  async function removeUser(user: User) {
+    if (user.id === session.value?.user.id) return
+    const confirmed = window.confirm(`确认删除账号 ${user.username}？此操作不可恢复。`)
+    if (!confirmed) return
+    try {
+      await api.deleteUser(user.id)
+      await refreshAdmin()
+    } catch (err) {
+      adminError.value = err instanceof Error ? err.message : '删除失败'
+    }
+  }
+
+  // ---- Admin: roles ----
+  type RoleModalState = {
+    open: boolean
+    mode: 'create' | 'edit'
+    targetId: string
+    form: {
+      name: string
+      description: string
+      permissions: string[]
+      system: boolean
+    }
+    busy: boolean
+    error: string
+  }
+
+  const roleModal = reactive<RoleModalState>({
+    open: false,
+    mode: 'create',
+    targetId: '',
+    form: { name: '', description: '', permissions: [], system: false },
+    busy: false,
+    error: '',
+  })
+
+  function openCreateRole() {
+    roleModal.mode = 'create'
+    roleModal.targetId = ''
+    roleModal.form = { name: '', description: '', permissions: [], system: false }
+    roleModal.error = ''
+    roleModal.open = true
+  }
+
+  function openEditRole(role: Role) {
+    roleModal.mode = 'edit'
+    roleModal.targetId = role.id
+    roleModal.form = {
+      name: role.name,
+      description: role.description,
+      permissions: [...role.permissions],
+      system: Boolean(role.system),
+    }
+    roleModal.error = ''
+    roleModal.open = true
+  }
+
+  function closeRoleModal() {
+    roleModal.open = false
+  }
+
+  function toggleRolePermission(permission: string, checked: boolean) {
+    const set = new Set(roleModal.form.permissions)
+    if (checked) set.add(permission)
+    else set.delete(permission)
+    roleModal.form.permissions = [...set]
+  }
+
+  function allSelected(group: string[]) {
+    return group.every(item => roleModal.form.permissions.includes(item))
+  }
+
+  function toggleGroupPermissions(group: string[]) {
+    const everyOn = allSelected(group)
+    const set = new Set(roleModal.form.permissions)
+    for (const item of group) {
+      if (everyOn) set.delete(item)
+      else set.add(item)
+    }
+    roleModal.form.permissions = [...set]
+  }
+
+  async function submitRole() {
+    if (!roleModal.form.name.trim()) {
+      roleModal.error = '请输入角色名称'
+      return
+    }
+    roleModal.busy = true
+    roleModal.error = ''
+    try {
+      if (roleModal.mode === 'create') {
+        await api.createRole({
+          name: roleModal.form.name.trim(),
+          description: roleModal.form.description.trim(),
+          permissions: roleModal.form.permissions,
+        })
+      } else if (roleModal.form.system) {
+        // System role: only permissions are mutable.
+        await api.updateRole(roleModal.targetId, {
+          permissions: roleModal.form.permissions,
+        })
+      } else {
+        await api.updateRole(roleModal.targetId, {
+          name: roleModal.form.name.trim(),
+          description: roleModal.form.description.trim(),
+          permissions: roleModal.form.permissions,
+        })
+      }
+      roleModal.open = false
+      await refreshAdmin()
+    } catch (err) {
+      roleModal.error = err instanceof Error ? err.message : '保存失败'
+    } finally {
+      roleModal.busy = false
+    }
+  }
+
+  async function removeRole(role: Role) {
+    if (role.system) return
+    const confirmed = window.confirm(`确认删除角色「${role.name}」？`)
+    if (!confirmed) return
+    try {
+      await api.deleteRole(role.id)
+      await refreshAdmin()
+    } catch (err) {
+      adminError.value = err instanceof Error ? err.message : '删除失败'
+    }
+  }
+
+  function roleNameOf(roleId: string) {
+    return roles.value.find(role => role.id === roleId)?.name || roleId
   }
 
   onMounted(async () => {
