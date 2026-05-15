@@ -8,6 +8,8 @@ import { AuditModule } from './audit/audit.module'
 import { RolesModule } from './roles/roles.module'
 import { UsersModule } from './users/users.module'
 import { KbModule } from './kb/kb.module'
+import { WebModule } from './web/web.module'
+import { AiModule } from './ai/ai.module'
 import { AuthGuard } from './common/guards/auth.guard'
 
 @Module({
@@ -20,6 +22,8 @@ import { AuthGuard } from './common/guards/auth.guard'
     RolesModule,
     UsersModule,
     KbModule,
+    WebModule,
+    AiModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: AuthGuard }],
 })
