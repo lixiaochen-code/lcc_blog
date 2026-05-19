@@ -1795,3 +1795,89 @@ button.icon {
   color: var(--ink-subtle);
   font-size: 12px;
 }
+
+/* ---------- Admin shell (router-driven /admin/*) ---------- */
+
+.admin-shell {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  background: var(--canvas);
+}
+
+.admin-sidebar {
+  border-right: 1px solid var(--hairline);
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: var(--canvas);
+}
+
+.admin-sidebar-head p {
+  margin: 0;
+  color: var(--ink-subtle);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.admin-sidebar-head strong {
+  display: block;
+  margin-top: 2px;
+  font-size: 16px;
+  color: var(--ink);
+}
+
+.admin-sidebar nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.admin-nav-item {
+  display: block;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  color: var(--ink-subtle);
+  text-decoration: none;
+  font-size: 14px;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.admin-nav-item:hover {
+  background: var(--surface-hover);
+  color: var(--ink);
+}
+
+.admin-nav-item.active {
+  background: var(--surface-hover);
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.admin-main {
+  padding: 28px 32px;
+  overflow: auto;
+}
+
+.admin-main .admin-view {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Composer toggle row (AI panel) */
+
+.composer-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.search-toggle.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

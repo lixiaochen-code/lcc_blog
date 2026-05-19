@@ -3,6 +3,7 @@ import { NestFactory } from '@nestjs/core'
 import { ValidationPipe } from '@nestjs/common'
 import { AppModule } from './app.module'
 import { appConfig } from './config/app.config'
+import { HttpExceptionFilter } from './common/filters/http-exception.filter'
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { cors: true })
@@ -13,6 +14,7 @@ async function bootstrap() {
       forbidNonWhitelisted: false,
     })
   )
+  app.useGlobalFilters(new HttpExceptionFilter())
   await app.listen(appConfig.port)
 
   console.log(`KB server listening on http://localhost:${appConfig.port}`)

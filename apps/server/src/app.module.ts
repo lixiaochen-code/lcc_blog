@@ -9,6 +9,7 @@ import { RolesModule } from './roles/roles.module'
 import { UsersModule } from './users/users.module'
 import { KbModule } from './kb/kb.module'
 import { WebModule } from './web/web.module'
+import { McpModule } from './mcp/mcp.module'
 import { AiModule } from './ai/ai.module'
 import { AuthGuard } from './common/guards/auth.guard'
 
@@ -23,6 +24,7 @@ import { AuthGuard } from './common/guards/auth.guard'
     UsersModule,
     KbModule,
     WebModule,
+    McpModule,
     AiModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: AuthGuard }],

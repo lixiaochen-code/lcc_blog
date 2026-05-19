@@ -1,19 +1,24 @@
-import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common'
+import { BadRequestException, Inject, Injectable } from '@nestjs/common'
+import type { Response } from 'express'
 import { APP_CONFIG } from '../config/config.module'
 import type { AppConfig } from '../config/app.config'
 import { JsonStoreService } from '../store/json-store.service'
 import { KbService } from '../kb/kb.service'
 import { KbSearchService } from '../kb/kb-search.service'
-import { WebSearchService } from '../web/web-search.service'
-import { WebFetchService } from '../web/web-fetch.service'
-import { WebIngestService } from '../web/web-ingest.service'
 import { AuditService } from '../audit/audit.service'
 import { SYSTEM_PROMPT } from './prompts'
 import type { AuthContext } from '../common/auth-context'
-import type { ChatRequest, ChatResponse, Draft } from './ai.types'
+import type { ChatRequest, ChatResponse, Draft, ToolTraceEntry } from './ai.types'
 import type { ConversationMessage } from '../store/store.types'
+import {
+  AI_PROVIDER,
+  type AiProvider,
+  type ProviderChatMessage,
+} from './providers/provider.interface'
+import { ToolRegistry } from './tools/tool-registry'
+import type { ToolContext } from './tools/tool.interface'
 
-const MAX_TOOL_ROUNDS = 4
+const MAX_TOOL_ROUNDS = 6
 const KEEP_RECENT_TURNS = 8
 const MAX_CONTENT_CHARS = 4000
 
@@ -25,42 +30,54 @@ const truncate = (text: string, limit = MAX_CONTENT_CHARS): string => {
 const DRAFT_RE =
   /\[DRAFT\s+op="(create|update|delete|organize)"(?:\s+path="([^"]+)")?\]\s*(?:```(?:markdown|md|json)?\n([\s\S]*?)```)?/i
 
+interface InitialMessageInput {
+  message: string
+  history: ConversationMessage[]
+  currentArticle: { path: string; title: string; content: string } | null
+  articleList: { path: string; title: string }[]
+  useWebSearch: boolean
+}
+
+/**
+ * Thin orchestrator. Delegates LLM I/O to `AI_PROVIDER` and tool dispatch
+ * to `ToolRegistry`. Owns: conversation persistence, history compaction,
+ * draft extraction, audit logging, SSE event emission.
+ */
 @Injectable()
 export class AiService {
   constructor(
     @Inject(APP_CONFIG) private readonly config: AppConfig,
+    @Inject(AI_PROVIDER) private readonly provider: AiProvider,
     private readonly store: JsonStoreService,
     private readonly kb: KbService,
     private readonly kbSearch: KbSearchService,
-    private readonly webSearch: WebSearchService,
-    private readonly webFetch: WebFetchService,
-    private readonly webIngest: WebIngestService,
-    private readonly audit: AuditService
+    private readonly audit: AuditService,
+    private readonly registry: ToolRegistry
   ) {}
 
-  // --- public ---
+  // --- public: non-stream (kept for back-compat; UI uses chatStream) ---
 
+  /** @deprecated Frontend uses `chatStream`. Keep until external scripts migrate. */
   async chat(req: ChatRequest, ctx: AuthContext): Promise<ChatResponse> {
     const { message, currentPath, useWebSearch = false } = req
     if (!message?.trim()) throw new BadRequestException('message 不能为空')
 
     const conversationId = req.conversationId || this.newId()
-    const history = this.loadHistory(conversationId, ctx.user.id)
-
-    const articleList = this.kb.flattenTree().map(a => ({ path: a.path, title: a.title }))
-    const currentArticle = currentPath ? this.safeRead(currentPath) : null
-    const canWeb = useWebSearch && ctx.permissions.includes('ai:web')
-    const tools = this.buildTools(canWeb)
-    const baseMessages = this.buildInitialMessages({
+    const toolCtx = this.buildToolContext(ctx, useWebSearch, req.autoApply)
+    const baseMessages = this.prepareBaseMessages({
       message,
-      history,
-      currentArticle,
-      articleList,
-      useWebSearch: canWeb,
+      history: this.loadHistory(conversationId, ctx.user.id),
+      currentArticle: currentPath ? this.safeRead(currentPath) : null,
+      articleList: this.kb.flattenTree().map(a => ({ path: a.path, title: a.title })),
+      useWebSearch: toolCtx.canWeb,
     })
 
     if (!this.config.openai.apiKey) {
-      const content = this.localFallback(message, articleList, currentArticle)
+      const content = this.localFallback(
+        message,
+        baseMessages.articleList,
+        baseMessages.currentArticle
+      )
       this.persistTurn(conversationId, ctx.user.id, message, content)
       return {
         conversationId,
@@ -71,14 +88,22 @@ export class AiService {
       }
     }
 
-    const { messages, finalDirect, trace } = await this.researchLoop(baseMessages, tools, canWeb)
+    const { messages, finalDirect, trace } = await this.researchLoop(baseMessages.messages, toolCtx)
+
     let content = finalDirect
     if (!content) {
-      content = await this.streamFinalAnswer(messages)
+      content = await this.collectStream(messages)
     }
 
-    const draft = this.extractDraft(content)
-    const reasoning = this.buildReasoning(articleList, currentArticle, trace, draft, canWeb)
+    const draft = toolCtx.draftSink.value ?? this.extractDraft(content)
+    const reasoning = this.buildReasoning(
+      baseMessages.articleList,
+      baseMessages.currentArticle,
+      trace,
+      draft,
+      toolCtx.canWeb,
+      toolCtx.canAutoApply
+    )
     const sources = this.collectSources(trace)
 
     this.persistTurn(conversationId, ctx.user.id, message, content)
@@ -86,6 +111,106 @@ export class AiService {
 
     return { conversationId, content, reasoning, draft, sources }
   }
+
+  // --- public: SSE streaming ---
+
+  async chatStream(req: ChatRequest, ctx: AuthContext, res: Response): Promise<void> {
+    const message = req.message?.trim()
+    if (!message) {
+      res.status(400).json({ statusCode: 400, message: 'message 不能为空' })
+      return
+    }
+
+    res.setHeader('Content-Type', 'text/event-stream; charset=utf-8')
+    res.setHeader('Cache-Control', 'no-cache, no-transform')
+    res.setHeader('Connection', 'keep-alive')
+    res.setHeader('X-Accel-Buffering', 'no')
+    res.flushHeaders?.()
+
+    const send = (event: string, data: unknown): void => {
+      res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)
+    }
+
+    const conversationId = req.conversationId || this.newId()
+    send('meta', { conversationId })
+
+    try {
+      const useWebSearch = Boolean(req.useWebSearch)
+      const toolCtx = this.buildToolContext(ctx, useWebSearch, req.autoApply)
+      const prep = this.prepareBaseMessages({
+        message,
+        history: this.loadHistory(conversationId, ctx.user.id),
+        currentArticle: req.currentPath ? this.safeRead(req.currentPath) : null,
+        articleList: this.kb.flattenTree().map(a => ({ path: a.path, title: a.title })),
+        useWebSearch: toolCtx.canWeb,
+      })
+
+      if (!this.config.openai.apiKey) {
+        const content = this.localFallback(message, prep.articleList, prep.currentArticle)
+        send('delta', { delta: content })
+        const reasoning = ['未配置 OPENAI_API_KEY']
+        send('reasoning', { reasoning })
+        this.persistTurn(conversationId, ctx.user.id, message, content)
+        send('done', {
+          conversationId,
+          content,
+          reasoning,
+          draft: null,
+          sources: [],
+        })
+        res.end()
+        return
+      }
+
+      const { messages, finalDirect, trace } = await this.researchLoop(
+        prep.messages,
+        toolCtx,
+        (name, status, detail) => send('tool', { name, status, detail })
+      )
+
+      const reasoning = this.buildReasoning(
+        prep.articleList,
+        prep.currentArticle,
+        trace,
+        toolCtx.draftSink.value,
+        toolCtx.canWeb,
+        toolCtx.canAutoApply
+      )
+      send('reasoning', { reasoning })
+
+      let content = finalDirect
+      if (!content) {
+        content = ''
+        for await (const event of this.provider.streamChat({
+          model: this.config.openai.model,
+          temperature: 0.3,
+          messages,
+        })) {
+          if (event.type === 'delta' && event.delta) {
+            content += event.delta
+            send('delta', { delta: event.delta })
+          } else if (event.type === 'error') {
+            throw new Error(event.error || 'AI 流式响应失败')
+          }
+        }
+      } else {
+        send('delta', { delta: finalDirect })
+      }
+
+      const draft = toolCtx.draftSink.value ?? this.extractDraft(content)
+      const sources = this.collectSources(trace)
+      this.persistTurn(conversationId, ctx.user.id, message, content)
+      this.audit.log(ctx.user.id, 'ai.chat', { conversationId })
+
+      send('done', { conversationId, content, reasoning, draft, sources })
+    } catch (err) {
+      send('error', { message: err instanceof Error ? err.message : String(err) })
+    } finally {
+      res.end()
+    }
+  }
+
+  // --- public: draft confirmation + history ---
 
   async applyDraft(draft: Draft, ctx: AuthContext) {
     if (draft.operation === 'create' || draft.operation === 'update') {
@@ -114,81 +239,79 @@ export class AiService {
       .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
   }
 
-  // --- private: tool dispatch ---
+  // --- private: orchestration ---
 
-  private async dispatchTool(
-    name: string,
-    args: Record<string, any>,
-    canWeb: boolean
-  ): Promise<unknown> {
-    if (name === 'search_kb') {
-      return { items: this.kbSearch.searchByQuery(String(args.query || ''), args.limit ?? 8) }
+  private buildToolContext(
+    ctx: AuthContext,
+    useWebSearch: boolean,
+    autoApply: boolean | undefined
+  ): ToolContext {
+    // canAutoApply is `permission AND ui-toggle`. The toggle defaults to ON
+    // (Khoj-style "decide and act"); users without the permission can't
+    // enable it. This puts the user in control without weakening the perm.
+    const hasPerm = ctx.permissions.includes('ai:auto_apply')
+    const toggleOn = autoApply !== false // undefined treated as ON
+    return {
+      user: ctx,
+      canWeb: Boolean(useWebSearch) && ctx.permissions.includes('ai:web'),
+      canAutoApply: hasPerm && toggleOn,
+      draftSink: { value: null },
     }
-    if (name === 'read_article') {
-      try {
-        const a = this.kb.readArticle(String(args.path || ''))
-        return {
-          path: a.path,
-          title: a.title,
-          content: truncate(a.content, 8000),
-          updatedAt: a.updatedAt,
-        }
-      } catch (e: any) {
-        return { path: args.path, error: e.message || '读取失败' }
-      }
-    }
-    if (name === 'web_search') {
-      if (!canWeb) return { error: '用户未开启网络检索' }
-      return this.webSearch.search(String(args.query || ''))
-    }
-    if (name === 'web_fetch') {
-      if (!canWeb) return { error: '用户未开启网络检索' }
-      return this.webFetch.fetch(String(args.url || ''))
-    }
-    if (name === 'web_ingest') {
-      if (!canWeb) return { error: '用户未开启网络检索' }
-      return this.webIngest.ingest(String(args.url || ''))
-    }
-    return { error: `未知工具：${name}` }
   }
 
-  // --- private: research loop ---
+  private prepareBaseMessages(opts: InitialMessageInput): {
+    messages: ProviderChatMessage[]
+    articleList: { path: string; title: string }[]
+    currentArticle: { path: string; title: string; content: string } | null
+  } {
+    const messages = this.buildInitialMessages(opts)
+    return {
+      messages,
+      articleList: opts.articleList,
+      currentArticle: opts.currentArticle,
+    }
+  }
 
   private async researchLoop(
-    baseMessages: any[],
-    tools: any[],
-    canWeb: boolean
-  ): Promise<{ messages: any[]; finalDirect: string; trace: any[] }> {
-    const messages = [...baseMessages]
-    const trace: any[] = []
+    baseMessages: ProviderChatMessage[],
+    ctx: ToolContext,
+    onTool?: (name: string, status: 'running' | 'done' | 'error', detail: string) => void
+  ): Promise<{
+    messages: ProviderChatMessage[]
+    finalDirect: string
+    trace: ToolTraceEntry[]
+  }> {
+    const messages: ProviderChatMessage[] = [...baseMessages]
+    const trace: ToolTraceEntry[] = []
+    const schemas = this.registry.schemasFor(ctx)
 
     for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
-      const response = await this.fetchCompletion({
+      const response = await this.provider.chat({
         model: this.config.openai.model,
         temperature: 0.2,
         messages,
-        tools: tools.length ? tools : undefined,
-        tool_choice: tools.length ? 'auto' : undefined,
+        tools: schemas.length ? schemas : undefined,
+        tool_choice: schemas.length ? 'auto' : undefined,
       })
-      const data = (await response.json()) as Record<string, any>
-      const choice = data.choices?.[0]?.message
-      if (!choice) throw new Error('AI 服务返回为空')
 
-      const toolCalls: any[] = choice.tool_calls || []
-      if (!toolCalls.length) {
-        return { messages, finalDirect: choice.content || '', trace }
+      if (!response.toolCalls.length) {
+        return { messages, finalDirect: response.content || '', trace }
       }
 
-      messages.push({ role: 'assistant', content: choice.content || '', tool_calls: toolCalls })
+      messages.push({
+        role: 'assistant',
+        content: response.content || '',
+        tool_calls: response.toolCalls,
+      })
 
-      for (const call of toolCalls) {
-        const args = this.parseArgs(call.function?.arguments)
-        const result = await this.dispatchTool(call.function?.name, args, canWeb).catch(
-          (e: any) => ({
-            error: e.message || '工具调用失败',
-          })
-        )
-        trace.push({ name: call.function?.name, args: call.function?.arguments, result })
+      for (const call of response.toolCalls) {
+        const name = call.function.name
+        const args = this.parseArgs(call.function.arguments)
+        onTool?.(name, 'running', this.argsSummary(args))
+        const result = await this.registry.dispatch(name, args, ctx)
+        trace.push({ name, args, result })
+        const status = this.isError(result) ? 'error' : 'done'
+        onTool?.(name, status, this.summarizeTool(name, result))
         messages.push({
           role: 'tool',
           tool_call_id: call.id,
@@ -200,134 +323,29 @@ export class AiService {
     return { messages, finalDirect: '', trace }
   }
 
-  // --- private: streaming final answer ---
-
-  private async streamFinalAnswer(messages: any[]): Promise<string> {
-    const response = await this.fetchCompletion({
+  private async collectStream(messages: ProviderChatMessage[]): Promise<string> {
+    let content = ''
+    for await (const event of this.provider.streamChat({
       model: this.config.openai.model,
       temperature: 0.3,
-      stream: true,
       messages,
-    })
-    if (!response.body) throw new Error('AI 流式服务没有返回内容')
-
-    const reader = response.body.getReader()
-    const decoder = new TextDecoder()
-    let buffer = ''
-    let content = ''
-
-    try {
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-        buffer += decoder.decode(value, { stream: true })
-        const packets = buffer.split('\n\n')
-        buffer = packets.pop() || ''
-        for (const packet of packets) {
-          for (const line of packet.split('\n')) {
-            const trimmed = line.trim()
-            if (!trimmed.startsWith('data:')) continue
-            const payload = trimmed.slice(5).trim()
-            if (!payload || payload === '[DONE]') continue
-            try {
-              const chunk = JSON.parse(payload)
-              const delta = chunk.choices?.[0]?.delta?.content || ''
-              if (delta) content += delta
-            } catch {
-              /* skip malformed */
-            }
-          }
-        }
-      }
-    } finally {
-      reader.releaseLock()
+    })) {
+      if (event.type === 'delta' && event.delta) content += event.delta
+      if (event.type === 'error') throw new Error(event.error || 'AI 流式响应失败')
     }
     return content
   }
 
-  // --- private: helpers ---
+  // --- private: prompt assembly ---
 
-  private buildTools(canWeb: boolean): any[] {
-    const tools: any[] = [
-      {
-        type: 'function',
-        function: {
-          name: 'search_kb',
-          description: '在本地知识库中按关键词搜索文章（匹配路径与标题）。',
-          parameters: {
-            type: 'object',
-            properties: {
-              query: { type: 'string', description: '查询词' },
-              limit: { type: 'integer', minimum: 1, maximum: 20, default: 8 },
-            },
-            required: ['query'],
-            additionalProperties: false,
-          },
-        },
-      },
-      {
-        type: 'function',
-        function: {
-          name: 'read_article',
-          description: '按相对路径读取知识库内某篇文章的全文。',
-          parameters: {
-            type: 'object',
-            properties: {
-              path: { type: 'string', description: '相对 docs/knowledge 的 .md 路径' },
-            },
-            required: ['path'],
-            additionalProperties: false,
-          },
-        },
-      },
-    ]
-    if (canWeb) {
-      tools.push(
-        {
-          type: 'function',
-          function: {
-            name: 'web_search',
-            description: '本地知识库不足以回答时，搜索互联网。',
-            parameters: {
-              type: 'object',
-              properties: { query: { type: 'string', description: '提炼后的搜索词' } },
-              required: ['query'],
-              additionalProperties: false,
-            },
-          },
-        },
-        {
-          type: 'function',
-          function: {
-            name: 'web_fetch',
-            description: '抓取指定 URL 的网页正文。',
-            parameters: {
-              type: 'object',
-              properties: { url: { type: 'string', description: '要抓取的网页 URL' } },
-              required: ['url'],
-              additionalProperties: false,
-            },
-          },
-        }
-      )
-    }
-    return tools
-  }
-
-  private buildInitialMessages(opts: {
-    message: string
-    history: ConversationMessage[]
-    currentArticle: { path: string; title: string; content: string } | null
-    articleList: { path: string; title: string }[]
-    useWebSearch: boolean
-  }): any[] {
+  private buildInitialMessages(opts: InitialMessageInput): ProviderChatMessage[] {
     const { older, recent } = this.compactHistory(opts.history)
     const directory = opts.articleList
       .slice(0, 80)
       .map(a => `- ${a.path}${a.title ? ` — ${a.title}` : ''}`)
       .join('\n')
 
-    return [
+    const messages: (ProviderChatMessage | null)[] = [
       { role: 'system', content: SYSTEM_PROMPT },
       {
         role: 'system',
@@ -343,12 +361,16 @@ export class AiService {
         role: 'system',
         content: opts.useWebSearch
           ? '用户开启了网络检索权限。'
-          : '用户未开启网络检索：不要调用 web_search / web_fetch 工具。',
+          : '用户未开启网络检索：不要调用 web_search / web_fetch / web_ingest 工具。',
       },
       older ? { role: 'system', content: older } : null,
-      ...recent.map(m => ({ role: m.role, content: m.content })),
+      ...recent.map(m => ({
+        role: m.role as ProviderChatMessage['role'],
+        content: m.content,
+      })),
       { role: 'user', content: opts.message },
-    ].filter(Boolean)
+    ]
+    return messages.filter((m): m is ProviderChatMessage => m !== null)
   }
 
   private compactHistory(history: ConversationMessage[]): {
@@ -370,22 +392,7 @@ export class AiService {
     return { older: `早期对话摘要：\n${summary}`, recent }
   }
 
-  private async fetchCompletion(body: Record<string, any>): Promise<Response> {
-    const url = `${this.config.openai.baseUrl.replace(/\/$/, '')}/chat/completions`
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${this.config.openai.apiKey}`,
-      },
-      body: JSON.stringify(body),
-    })
-    if (!res.ok) {
-      const detail = await res.text().catch(() => '')
-      throw new Error(`AI 服务请求失败：${res.status}${detail ? ` ${detail.slice(0, 200)}` : ''}`)
-    }
-    return res
-  }
+  // --- private: result shaping ---
 
   private extractDraft(content: string): Draft | null {
     const match = content.match(DRAFT_RE)
@@ -400,8 +407,11 @@ export class AiService {
       try {
         const parsed = JSON.parse(body || '{}')
         actions = (Array.isArray(parsed.actions) ? parsed.actions : [])
-          .filter((a: any) => a?.type === 'move' && a.from && a.to)
-          .map((a: any) => ({
+          .filter(
+            (a: { type?: string; from?: string; to?: string }) =>
+              a?.type === 'move' && !!a.from && !!a.to
+          )
+          .map((a: { from: string; to: string; title?: string }) => ({
             type: 'move' as const,
             from: String(a.from),
             to: String(a.to),
@@ -419,17 +429,18 @@ export class AiService {
   private buildReasoning(
     articleList: { path: string }[],
     currentArticle: { path: string } | null,
-    trace: any[],
+    trace: ToolTraceEntry[],
     draft: Draft | null,
-    canWeb: boolean
+    canWeb: boolean,
+    canAutoApply: boolean
   ): string[] {
     const steps: string[] = []
     steps.push(`加载知识库目录：${articleList.length} 篇文章`)
     steps.push(currentArticle ? `已读取当前文章：${currentArticle.path}` : '未绑定当前文章')
     steps.push(canWeb ? '允许调用网络工具' : '未授权网络工具')
+    steps.push(canAutoApply ? '自动落盘授权:写工具直接生效' : '草稿模式:模型仅提案,需用户确认')
     for (const t of trace) {
-      const summary = this.summarizeTool(t.name, t.result)
-      steps.push(`${t.name} → ${summary}`)
+      steps.push(`${t.name} → ${this.summarizeTool(t.name, t.result)}`)
     }
     if (draft) {
       steps.push(
@@ -441,23 +452,39 @@ export class AiService {
     return steps
   }
 
-  private summarizeTool(name: string, result: any): string {
-    if (!result) return '空结果'
-    if (result.error) return result.error
-    if (name === 'search_kb') return `${result.items?.length || 0} 条候选`
-    if (name === 'read_article') return result.path ? `已读取 ${result.path}` : '未找到'
-    if (name === 'web_search') return `${result.results?.length || 0} 条外部参考`
-    if (name === 'web_fetch') return result.title ? `已抓取：${result.title}` : '已抓取'
-    if (name === 'web_ingest') return result.path ? `已落盘：${result.path}` : '完成'
+  private summarizeTool(name: string, result: unknown): string {
+    if (!result || typeof result !== 'object') return '完成'
+    const obj = result as Record<string, unknown>
+    if (typeof obj.error === 'string' && obj.error) return obj.error
+    if (name === 'search_kb') return `${Array.isArray(obj.items) ? obj.items.length : 0} 条候选`
+    if (name === 'read_article') return obj.path ? `已读取 ${obj.path}` : '未找到'
+    if (name === 'web_search')
+      return `${Array.isArray(obj.results) ? obj.results.length : 0} 条外部参考`
+    if (name === 'web_fetch') return obj.title ? `已抓取：${obj.title}` : '已抓取'
+    if (name === 'web_ingest') return obj.path ? `已落盘：${obj.path}` : '完成'
+    if (name === 'create_article') return obj.path ? `已新建 ${obj.path}` : '完成'
+    if (name === 'replace_article') return obj.path ? `已覆盖 ${obj.path}` : '完成'
+    if (name === 'rename_article') return obj.path ? `已重命名为 ${obj.path}` : '完成'
+    if (name === 'delete_article') return obj.path ? `已删除 ${obj.path}` : '完成'
+    if (name === 'propose_draft') return '已提案草稿,等待用户确认'
     return '完成'
   }
 
-  private collectSources(trace: any[]): { title: string; url: string; snippet: string }[] {
+  private collectSources(
+    trace: ToolTraceEntry[]
+  ): { title: string; url: string; snippet: string }[] {
     const sources: { title: string; url: string; snippet: string }[] = []
     for (const t of trace) {
-      if (t.name === 'web_search' && t.result?.results) {
-        for (const r of t.result.results.slice(0, 3)) {
-          sources.push({ title: r.title, url: r.url, snippet: r.snippet || '' })
+      if (t.name === 'web_search' && t.result && typeof t.result === 'object') {
+        const results = (t.result as { results?: unknown }).results
+        if (Array.isArray(results)) {
+          for (const r of results.slice(0, 3)) {
+            sources.push({
+              title: String((r as Record<string, unknown>).title || ''),
+              url: String((r as Record<string, unknown>).url || ''),
+              snippet: String((r as Record<string, unknown>).snippet || ''),
+            })
+          }
         }
       }
     }
@@ -466,14 +493,27 @@ export class AiService {
 
   private truncateResult(result: unknown): unknown {
     if (!result || typeof result !== 'object') return result
-    const obj = result as Record<string, any>
-    if (obj.content && typeof obj.content === 'string') {
+    const obj = result as Record<string, unknown>
+    if (typeof obj.content === 'string') {
       return { ...obj, content: truncate(obj.content, 4000) }
     }
     return result
   }
 
-  private parseArgs(raw: string | undefined): Record<string, any> {
+  private argsSummary(args: unknown): string {
+    if (!args || typeof args !== 'object') return ''
+    const obj = args as Record<string, unknown>
+    if (typeof obj.query === 'string') return obj.query.slice(0, 60)
+    if (typeof obj.url === 'string') return obj.url.slice(0, 80)
+    if (typeof obj.path === 'string') return obj.path
+    return ''
+  }
+
+  private isError(result: unknown): boolean {
+    return Boolean(result && typeof result === 'object' && (result as { error?: unknown }).error)
+  }
+
+  private parseArgs(raw: string | undefined): Record<string, unknown> {
     try {
       return JSON.parse(raw || '{}')
     } catch {

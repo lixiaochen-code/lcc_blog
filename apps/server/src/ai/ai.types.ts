@@ -1,3 +1,7 @@
+import { ChatRequestDto } from './dto/chat.dto'
+
+export type ChatRequest = ChatRequestDto
+
 export interface Draft {
   operation: 'create' | 'update' | 'delete' | 'organize'
   path: string
@@ -11,18 +15,16 @@ export interface ToolEvent {
   detail: string
 }
 
-export interface ChatRequest {
-  message: string
-  history?: { role: string; content: string }[]
-  currentPath?: string
-  conversationId?: string
-  useWebSearch?: boolean
-}
-
 export interface ChatResponse {
   conversationId: string
   content: string
   reasoning: string[]
   draft: Draft | null
   sources: { title: string; url: string; snippet: string }[]
+}
+
+export interface ToolTraceEntry {
+  name: string
+  args: unknown
+  result: unknown
 }

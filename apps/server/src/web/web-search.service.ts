@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common'
 import { APP_CONFIG } from '../config/config.module'
 import type { AppConfig } from '../config/app.config'
 import { JsonStoreService } from '../store/json-store.service'
+import { HttpMcpAdapter } from '../mcp/adapters/http-mcp.adapter'
 
 export interface SearchResult {
   query: string
@@ -112,16 +113,23 @@ export class WebSearchService {
   async search(query: string): Promise<SearchResult> {
     const normalized = this.normalizeQuery(query)
     const data = this.store.read()
-    const mcp = data.mcpServers.find(s => s.enabled && s.type === 'http' && s.endpoint)
-    if (mcp) {
-      const url = new URL(mcp.endpoint)
-      url.searchParams.set('q', normalized)
-      const res = await this.fetchWithTimeout(url)
-      if (!res.ok) throw new Error(`MCP 检索失败：${res.status}`)
-      return res.json() as Promise<SearchResult>
+    const mcpRecord = data.mcpServers.find(s => s.enabled && s.type === 'http' && s.endpoint)
+    const errors: string[] = []
+
+    if (mcpRecord) {
+      try {
+        const adapter = HttpMcpAdapter.fromRecord(mcpRecord)
+        const result = (await adapter.callTool('web_search', { query: normalized })) as SearchResult
+        if (result?.results?.length) return result
+        errors.push(`${mcpRecord.name} 未返回有效结果`)
+      } catch (err) {
+        // Fall through to DDG / Bing rather than failing the whole search —
+        // a misconfigured MCP endpoint shouldn't break the model's ability
+        // to retry on a public engine.
+        errors.push(err instanceof Error ? err.message : 'MCP 检索不可用')
+      }
     }
 
-    const errors: string[] = []
     for (const searcher of [this.searchDDG.bind(this), this.searchBing.bind(this)]) {
       try {
         const result = await searcher(normalized)
